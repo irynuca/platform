@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ ticker }} - Analiza Fundamentală</title>
+    <!-- Bootstrap 5.3 CSS from CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Your Custom Styles -->
+
+    <!-- Line Awesome Icons -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/line-awesome.min.css') }}">
+  
+    <!-- Theme & Vendor CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='icons/font-awesome/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/animate/animate.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/perfect-scrollbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/jquery-nice-select/css/nice-select.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/jquery-autocomplete/jquery-ui.css') }}">
+
+    <!-- jQuery First -->
+    <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+
+    <!-- Plugins (jQuery must be above these) -->
+    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/perfect-scrollbar/js/perfect-scrollbar.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/metismenu/js/metisMenu.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/jquery-autocomplete/jquery-ui.js') }}"></script>
+
+    <!-- Dolab Settings -->
+    <script src="{{ url_for('static', filename='js/dlab-settings.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dlabnav-init.js') }}"></script>
+    
+    <!-- Custom Logic - LAST -->
+    <script src="{{ url_for('static', filename='js/custom.js') }}"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+
+
+
+
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header Section with Three Columns -->
+        <div class="row text-center align-items-center">
+            
+            <!-- Left: Company Name -->
+            <div class="col-md-4 text-start">
+                <div class="row">
+                    <div class="col-12">
+                        <h2 class="fw-bold"> {{ company_name }}</h1>
+                    </div>
+                    <div class="col-12">
+                        <h4 class="fw-bold text-muted"> Industrie: {{ industry }}</h4>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Middle: Stock Price & Variation -->
+            <div class="col-md-4 text-center">
+                <h3 class="fw-bold">{{ last_price }} RON</h3>
+                <p class="{% if price_variation|float >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ price_variation }}%
+                </p>
+            </div>
+
+            <!-- Right Column: Portfolio & Wishlist Buttons -->
+            <div class="col-md-4 text-end">
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <button class="btn btn-primary btn-sm">Portofoliu</button>
+                    </div>
+                    <div class="col-12">
+                        <button class="btn btn-secondary btn-sm">Wishlist</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Financial Metrics -->
+        <!-- Key Financial Metrics Section -->
+    <div class="container">
+        <div class="row text-center mt-3">
+
+            <!-- Column 1: Market Cap -->
+            <div class="col-md-2">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="fw-bold text-purple">{{ market_cap }}</p>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted small">Capitalizare bursieră</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 2: YoY Change / YTD Change -->
+            <div class="col-md-2">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="fw-bold text-purple">{{ yoy_change }} / {{ ytd_change }}</p>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted small">YoY Change / YTD Change</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 3: P/E Ratio -->
+            <div class="col-md-2">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="fw-bold text-purple">{{ pe_ratio }}x</p>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted small">P/E</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 4: Net Income -->
+            <div class="col-md-2">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="fw-bold text-purple">{{ net_income }}</p>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted small">Profit net LTM</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column 5: Next Earnings Date -->
+            <div class="col-md-2">
+                <div class="row">
+                    <div class="col-12">
+                        <p class="fw-bold text-purple">{{ next_earnings_date }}</p>
+                    </div>
+                    <div class="col-12">
+                        <p class="text-muted small">Următoarea raportare</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+        <!-- Tabs Navigation -->
+        <div class="default-tab">
+            <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" data-bs-target="#summary">
+                        <i class="las la-file-alt me-2"></i> Sumar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#financials">
+                        <i class="lar la-chart-bar me-2"></i> Evolutie financiara
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#indicators">
+                        <i class="la la-calculator me-2"></i> Indicatori financiari
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content mt-4">
+            <div class="tab-pane fade show active" id="summary" role="tabpanel">
+                <div class="row">
+                    <!-- Left Column: Despre Companie -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" id="card-title-2" style="--bs-card-bg: rgba(94, 62, 208, 0.3);">
+                            <div class="card-header border-0 pb-0">
+                                <h5 class="card-title text-white">Despre companie</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text text-white">{{ business_description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <!-- Right Column: Evoluție preț acțiune -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100" id="card-title-2" style="--bs-card-bg: rgba(94, 62, 208, 0.3);">
+                            <div class="card-header border-0 pb-0">
+                                <h5 class="card-title text-white">Evoluție preț acțiune</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-end mb-3">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button class="btn btn-outline-light" onclick="loadStockChart('1d')">1 zi</button>
+                                        <button class="btn btn-outline-light" onclick="loadStockChart('1mo')">1 luna</button>
+                                        <button class="btn btn-outline-light" onclick="loadStockChart('1y')">1 an</button>
+                                        <button class="btn btn-outline-light" onclick="loadStockChart('5y')">5 ani</button>
+                                        <button class="btn btn-outline-light" onclick="loadStockChart('max')">max</button>
+                                    </div>
+                                </div>                                
+                                <div id="lightweight-stock-chart" style="height: 300;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="financials" class="tab-pane fade" role="tabpanel">
+                <!-- Sub-tabs for Financial Statements -->
+                <ul class="nav nav-pills mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="showSubTab('pl_statement')">Cont de profit și pierdere</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSubTab('balance_sheet')">Bilanț contabil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showSubTab('cash_flow')">Fluxuri de numerar</a>
+                    </li>
+                </ul>
+
+                <!-- P&L Statement -->
+                <div id="pl_statement" class="sub-tab-content">
+                    <!-- Buttons for selecting financial view -->
+                    <div class="container-fluid px-0">
+                        <div class="row align-items-center mb-4">
+                            <!-- Left Column: Description -->
+                            <div class="col-md-6">
+                                <p class="mb-0 fw-medium text-muted">Vizualizează mai jos istoricul financiar al companiei. Alege un mod de vizualizare.</p>
+                            </div>                    
+                            <!-- Right Column: Button Group -->
+                            <div class="col-md-6">
+                                <div class="btn-group w-100" role="group" aria-label="Financial View Selection">
+                                    <button id="btn-annual" type="button" class="btn btn-outline-secondary w-100 btn-sm" onclick="loadFinancialData('annual', 'cml')">anual</button>
+                                    <button id="btn-quarterly" type="button" class="btn btn-outline-secondary w-100 btn-sm" onclick="loadFinancialData('quarter', 'qtl')">trimestrial</button>
+                                    <button id="btn-quarterly-cml" type="button" class="btn btn-outline-secondary w-100 btn-sm" onclick="loadFinancialData('quarter', 'cml')">trimestrial cumulat</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    {% if pl_statement and pl_statement | length > 0 %}
+                    <!-- Cont de profit si pierdere -->
+                    <div class="card-body">
+                        <div class="table-responsive custom-scroll-wrapper">
+                            <table id="financials-table" class="table primary-table-bordered table-hover align-middle text-white freeze-column">
+                                <thead class="thead-info">
+                                    <tr>
+                                        <th class="text-start" scope="col">Metric</th>
+                                        {# Gather all unique periods first if needed #}
+                                        {% set all_periods = [] %}
+                                        {% for r in pl_statement %}
+                                            {% for p in r["values"].keys() %}
+                                                {% if p not in all_periods %}
+                                                    {% set _ = all_periods.append(p) %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                        {# Sort them #}
+                                        {% set all_periods = all_periods|sort %}
+                                        
+                                        {# Output date columns #}
+                                        {% for p in all_periods %}
+                                        <th class="text-end">{{ p }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                {% for row in pl_statement %}
+                                <tr>
+                                    <td class="text-start">{{ row["metric_name"] }}</td>
+                                    {% for p in all_periods %}
+                                        <td class="text-end">{{ row["values"][p] if p in row["values"] else "-" }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                {% else %}
+                        <p>📊 Date financiare indisponibile.</p>
+                {% endif %}
+            </div>
+
+                <!-- Balance Sheet (Placeholder) -->
+                <div id="balance_sheet" class="sub-tab-content d-none">
+                    <h4>Bilanț contabil</h4>
+                    <p>📊 Datele bilanțului vor fi afișate aici...</p>
+                </div>
+
+                <!-- Cash Flow Statement (Placeholder) -->
+                <div id="cash_flow" class="sub-tab-content d-none">
+                    <h4>Fluxuri de numerar</h4>
+                    <p>📊 Datele fluxurilor de numerar vor fi afișate aici...</p>
+                </div>
+            </div>
+            </div>
+            <div id="indicators" class="tab-pane fade" role="tabpanel">
+                <h3>Indicatori financiari</h3>
+                <p>Aici sunt afișați indicatorii financiari...</p>
+            </div>
+        </div>
+
+    </div>
+
+<!-- Load Chart -->
+<script src="https://unpkg.com/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
+
+<script>
+    function loadStockChart(period = '1y') {
+        const ticker = "{{ ticker }}";
+    
+        fetch(`/historical_data/${ticker}/${period}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("lightweight-stock-chart").innerHTML = "<p>Date indisponibile.</p>";
+                    return;
+                }
+
+                // Clear chart before redrawing
+                document.getElementById("lightweight-stock-chart").innerHTML = "";
+
+                const chart = LightweightCharts.createChart(document.getElementById('lightweight-stock-chart'), {
+                    width: document.getElementById('lightweight-stock-chart').clientWidth,
+                    height: 300,
+                    layout: {
+                        background: { color: 'transparent' },
+                        textColor: '#ffffff',
+                    },
+                    grid: {
+                        vertLines: { visible: false },
+                        horzLines: { color: 'rgba(255,255,255,0.1)' },
+                    },
+                    timeScale: {
+                        timeVisible: true,
+                        borderColor: '#ffffff33',
+                    },
+                    rightPriceScale: {
+                        borderColor: '#ffffff33',
+                    },
+                });
+    
+                const areaSeries = chart.addAreaSeries({
+                    topColor: 'rgba(79, 209, 197, 0.5)',
+                    bottomColor: 'rgba(79, 209, 197, 0)',
+                    lineColor: '#4FD1C5',
+                    lineWidth: 2,
+                });
+    
+                const chartData = data.dates.map((date, i) => ({
+                    time: date.split('T')[0],
+                    value: parseFloat(data.prices[i])
+                }));
+                
+                areaSeries.setData(chartData);
+                chart.timeScale().fitContent();
+    
+                window.addEventListener('resize', () => {
+                    chart.resize(document.getElementById('lightweight-stock-chart').clientWidth, 300);
+                });
+            })
+            .catch(err => console.error("❌ Error loading chart", err));
+    }
+
+    // ✅ Load default chart on page load
+    document.addEventListener("DOMContentLoaded", function () {
+        loadStockChart('1y');
+    });
+</script>
+    
+
+<script>
+    function showSubTab(subTab) {
+        document.querySelectorAll(".sub-tab-content").forEach(section => {
+            section.classList.add("d-none");
+        });
+        document.getElementById(subTab).classList   .remove("d-none");
+        document.querySelectorAll(".nav-pills .nav-link").forEach(link => {
+            link.classList.remove("active");
+        });
+        event.target.classList.add("active");
+    }
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {  
+    function loadFinancialData(periodType, aggrType) {
+        let ticker = "{{ ticker }}";
+        let url = `/get_financials/${ticker}/${periodType}/${aggrType}`;
+        console.log("Fetching URL:", url);
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("financials-table").innerHTML = "<p>📊 Date indisponibile.</p>";
+                    return;
+                }
+                updateFinancialTable(data);
+            })
+            .catch(error => console.error("❌ Error fetching financial data:", error));
+    }
+
+
+    function updateFinancialTable(data) {
+        const table = document.getElementById("financials-table");
+        if (!table) return console.error("❌ #financials-table not found");
+
+        console.log("✅ Data from API:", data);
+
+        // data is now a list of metric rows
+        // We can assume the rows are already in the correct order from the backend
+
+        // 1) Identify a union of all periods
+        let allPeriods = new Set();
+        data.forEach(row => {
+            Object.keys(row.values).forEach(date => allPeriods.add(date));
+        });
+        // Convert to array & sort chronologically
+        let sortedPeriods = Array.from(allPeriods).sort((a, b) => new Date(a) - new Date(b));
+
+        // 2) Build table header
+        let theadHTML ="<thead class='thead-info'><tr><th class='text-start'>Metric</th>";
+        sortedPeriods.forEach(period => {
+            theadHTML += `<th class="text-end">${period}</th>`;
+        });
+        theadHTML += "</tr></thead>";
+
+        let tbodyHTML = "<tbody>";
+        data.forEach(row => {
+            tbodyHTML += `<tr><td class="text-start">${row.metric_name}</td>`;
+            sortedPeriods.forEach(period => {
+                tbodyHTML += `<td class="text-end">${row.values[period] || "-"}</td>`;
+            });
+            tbodyHTML += `</tr>`;
+        });
+        tbodyHTML += "</tbody>";
+
+        table.innerHTML = theadHTML+tbodyHTML;
+    }
+
+
+
+    document.getElementById("btn-annual").addEventListener("click", function() {
+        loadFinancialData("annual", "cml");
+    });
+
+    document.getElementById("btn-quarterly").addEventListener("click", function() {
+        loadFinancialData("quarter", "qtl");
+    });
+
+    document.getElementById("btn-quarterly-cml").addEventListener("click", function() {
+        loadFinancialData("quarter", "cml");
+    });
+
+    // Load default data (quarterly cumulated)
+    loadFinancialData("quarter", "cml");
+});
+</script>
+
+<!-- Bootstrap 5.3 JavaScript (Popper.js Included) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>
+
