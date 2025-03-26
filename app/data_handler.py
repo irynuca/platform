@@ -12,8 +12,20 @@ DATA_DIR = os.path.join(BASE_DIR, "data")  # Path to data/
 COMPANY_INFO_FILE = os.path.join(DATA_DIR, "company_info.csv")  # Full path to CSV
 DB_PATH = os.path.join(DATA_DIR, "financials.db")  # Full path to database
 
+import time
+
+def fetch_with_retry(ticker, retries=3, delay=5):
+    for attempt in range(retries):
+        try:
+            return yf.Ticker(ticker)
+        except Exception as e:
+            print(f"Retry {attempt + 1} failed: {e}")
+            time.sleep(delay)
+    raise Exception("Yahoo Finance API failed after multiple retries.")
+
+
 def get_yahoo_stock_price(ticker):
-    stock = yf.Ticker(ticker + ".RO")
+    stock = fetch_with_retry(ticker + ".RO")
     info = stock.info  # ✅ Retrieve stock info
 
     if not info:
@@ -67,7 +79,7 @@ def get_stock_data(ticker):
     return {**company_info, **yahoo_data}  # Merge company info & price data
 
 def get_historical_stock_data(ticker, period="1mo", interval="1d"):
-    stock=yf.Ticker(ticker + ".RO")
+    stock=fetch_with_retry(ticker + ".RO")
     # Adjust interval depending on the period
     if period in ["1d", "5d"]:
         interval = "30m"
