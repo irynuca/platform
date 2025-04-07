@@ -17579,11 +17579,16 @@ pre {
   height: 15.7rem; }
 
 .tooltipflot {
-  background-color: transparent;
-  font-size: 1.4rem;
-  padding: .5rem 1rem;
+  background-color: rgba(255, 255, 255, 0.3);
+  position:absolute;
+  font-size: 14px;
+  padding: 6px 10px;
   color: rgba(255, 255, 255, 0.7);
-  border-radius: .2rem; }
+  border-radius: .25rem;
+  pointer-events: none;
+  z-index: 100;
+  white-space: nowrap;
+  backdrop-filter: blur(4px); /* optional glass effect */ }
 
 .legendColorBox > div {
   border: 0 !important;
@@ -21559,7 +21564,7 @@ button {
     font-size: 1.25rem;
     font-weight: 600;
     color: #fff;
-    text-transform: capitalize; }
+    text-transform: none !important; }
     .card-title--large {
       font-size: 1.5rem; }
     .card-title--medium {
@@ -24361,10 +24366,16 @@ a:hover {
 #main-wrapper {
   opacity: 0;
   transition: all 0.25s ease-in;
-  padding: 0;
-  position: relative; }
-  #main-wrapper.show {
-    opacity: 1; }
+  position: relative;
+  margin-left: 18.5rem;
+  padding-top: 2rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+ }
+
+#main-wrapper.show {
+  opacity: 1; }
 
 .animation {
   position: fixed;
@@ -26629,7 +26640,7 @@ input:checked + .slider:before {
   min-width: 150px; /* Optional: fallback for very small screens */
   max-width: 25%;
   white-space: nowrap;
-  background: #0f172a; /* Uses the parent background, avoids visual layering issues */
+
 }
 
 /* Ensure table header is above table rows */
@@ -26642,8 +26653,75 @@ input:checked + .slider:before {
   min-width: 800px; /* Enough width to show 5+1 columns */
 }
 
+.table td,
+.table th {
+  color: white !important;
+}
+
+thead.thead {
+  background-color: rgba(94, 62, 208, 0.5); /* Replace with your color */
+}
+
 #stock-chart {
   width: 100%;
   max-width: 100%;
   height: auto;
 }
+
+/* 1. Accordion header styling: same color collapsed or expanded */
+.accordion-header {
+  background-color: #53CAFD; /* Customize to your preferred turquoise shade */
+  color: white;
+  font-weight: bold;
+  font-size: 1.05rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.accordion-header-text {
+  font-weight: 600;
+  font-size: 1.1rem;  /* Slightly larger */
+  flex: 1;
+}
+
+
+/* 2. Remove background-color shift on expansion */
+.accordion-header:not(.collapsed),
+.accordion-header.collapsed {
+  background-color: #53CAFD !important;
+  color: white !important;
+}
+
+/* 5. Table tweaks – compact rows */
+.table > tbody > tr > td,
+.table > thead > tr > th {
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+/* Optional: thinner row borders */
+.table > tbody > tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#segmentRevenueChart {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+#donutCenterLabel {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: white;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+

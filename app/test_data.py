@@ -46,6 +46,18 @@ for key, value in info.items():
 
 
 #--------------------Test if PL displays correctly in various combinations-----------------------------------------------------------------------------------
+from data_handler import get_financial_statement
+print(get_financial_statement("AQ", "Profit&Loss", "annual", "cml"))
+
 import json
-from data_handler import get_pl_statement
-print(get_pl_statement("AQ", "annual", "cml"))
+from data_handler import get_grouped_financial_ratios
+print(get_grouped_financial_ratios("AQ", "annual", "cml"))
+
+from data_handler import get_revenue_data
+print(get_revenue_data("AQ"))
+
+from data_handler import get_segment_revenue_notes
+print(get_segment_revenue_notes("AQ"))
+
+from data_handler import get_profit_and_margin_data
+print(get_profit_and_margin_data("AQ"))

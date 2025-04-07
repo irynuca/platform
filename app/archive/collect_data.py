@@ -4,6 +4,8 @@ from fuzzywuzzy import process
 import re
 from datetime import datetime
 
+#AM INCERCAT SA AGREP DATELE DE LA TGN DIN DIVERSE FISIER, VOI REVENI AICI SA PREIAU POATE PARTI DIN COD
+
 # Define the directory containing the Excel files
 directory = r"C:\Users\irina\Project Element\Data source\TGN\TGN_raw_fin"
 

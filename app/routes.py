@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from .data_handler import get_yahoo_stock_price, get_historical_stock_data, get_pl_statement
+from .data_handler import get_yahoo_stock_price, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios, get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data
 import json
 
 main = Blueprint('main', __name__)
@@ -29,9 +29,14 @@ def analysis(ticker):
     # Get period type and aggregation type from request (default: annual cumulative)
     period_type = request.args.get('period_type', 'annual')
     aggr_type = request.args.get('aggr_type', 'cml')
-
-    pl_statement = get_pl_statement(ticker, period_type, aggr_type)
-
+    print(f"➡️ Requested period_type: {period_type}, aggr_type: {aggr_type}")
+    pl_statement = get_financial_statement(ticker, "Profit&Loss", period_type, aggr_type)
+    bs_statement = get_financial_statement(ticker, "Balance Sheet", period_type, aggr_type)
+    cf_statement = get_financial_statement(ticker, "Cash Flow", period_type, aggr_type)
+    grouped_ratios = get_grouped_financial_ratios(ticker, period_type, aggr_type)
+    import json
+    print("✅ Ratios statement sent to template:")
+    print(json.dumps(grouped_ratios, indent=2, ensure_ascii=False))
     if "error" in stock_info:
         return f"<h1>{stock_info['error']}</h1>", 404
 
@@ -43,20 +48,13 @@ def analysis(ticker):
         business_description=business_description,
         historical_data=historical_data,
         pl_statement=pl_statement,
+        bs_statement=bs_statement,
+        cf_statement=cf_statement,
+        grouped_ratios=grouped_ratios,
         selected_period_type=period_type,
         selected_aggr_type=aggr_type,
         **stock_info
     )
-
-# API endpoint to get financials dynamically
-@main.route('/get_financials/<ticker>/<period_type>/<aggr_type>', methods=['GET'])
-def get_financials(ticker, period_type, aggr_type):
-    pl_statement = get_pl_statement(ticker, period_type, aggr_type)
-    if not pl_statement:
-        return jsonify({"error": "No financial data available"}), 404
-
-    return jsonify(pl_statement)
-
 
 @main.route('/historical_data/<ticker>/<period>')
 def historical_data(ticker, period):
@@ -64,4 +62,53 @@ def historical_data(ticker, period):
     if not historical_data:
         return jsonify({"error":"No available data"}), 404
     
+    return jsonify(data)
+
+# API endpoint to get financials dynamically
+@main.route('/pl_data/<ticker>/<period_type>/<aggr_type>', methods=['GET'])
+def get_pl_data(ticker, period_type, aggr_type):
+    try:
+        data=get_financial_statement(ticker, "Profit&Loss", period_type, aggr_type)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@main.route('/bs_data/<ticker>/<period_type>/<aggr_type>', methods=['GET'])
+def get_bs_data(ticker, period_type, aggr_type):
+    try:
+        data=get_financial_statement(ticker, "Balance Sheet", period_type, aggr_type)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@main.route('/cf_data/<ticker>/<period_type>/<aggr_type>', methods=['GET'])
+def get_cf_data(ticker, period_type, aggr_type):
+    try:
+        data=get_financial_statement(ticker, "Cash Flow", period_type, aggr_type)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/ratios_data/<ticker>/<period_type>/<aggr_type>")
+def ratios_data(ticker, period_type, aggr_type):
+    data = get_grouped_financial_ratios(ticker, period_type, aggr_type)
+    
+    return jsonify(data)
+
+@main.route('/revenue_data/<ticker>')
+def revenue_data(ticker):
+    data = get_revenue_data(ticker)
+    if not data:
+        return jsonify({"labels": [], "values": []})
+    return jsonify(data)
+
+@main.route("/segment_revenue_data/<ticker>")
+def segment_revenue_data(ticker):
+    data = get_segment_revenue_notes(ticker)
+    return jsonify(data)
+
+@main.route("/profit_and_margin_data/<ticker>")
+def profit_and_margin_data(ticker):
+    data=get_profit_and_margin_data(ticker)
     return jsonify(data)

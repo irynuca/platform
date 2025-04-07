@@ -1,6 +1,8 @@
 import sqlite3
 import pandas as pd
 
+#restructure your financial_data into a clean pivot table that looks like a traditional financial statement.
+
 # Connect to the database
 db_path = r"C:\Irina\Mosaiq8\financials.db"
 conn = sqlite3.connect(db_path)
