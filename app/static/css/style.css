@@ -27,7 +27,7 @@
         _reset
 
     4. layout
-        +footer
+        +footer  
         +header
         +rtl
         +sidebar
@@ -3671,7 +3671,7 @@ textarea.form-control-lg {
       border-top-width: 0;
       border-top-left-radius: calc(0.5rem - 1px);
       border-top-right-radius: calc(0.5rem - 1px); }
-    .card > .list-group:last-child {
+    .  > .list-group:last-child {
       border-bottom-width: 0;
       border-bottom-right-radius: calc(0.5rem - 1px);
       border-bottom-left-radius: calc(0.5rem - 1px); }
@@ -26715,6 +26715,7 @@ thead.thead {
   width: 100%;
 }
 
+
 #donutCenterLabel {
   font-family: 'Poppins', sans-serif;
   font-size: 1.1rem;
@@ -26723,5 +26724,4 @@ thead.thead {
   pointer-events: none;
   white-space: nowrap;
 }
-
 

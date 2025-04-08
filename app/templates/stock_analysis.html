@@ -265,55 +265,36 @@
             <div class="row">
                 <!-- Card 1 -->
                 <div class="col-md-4 mb-4">
-                    <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
-                        <div class="card-header">
-                            <h5 class="card-title">Venituri</h5>
+                    <div class="card text-white" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                        <div class="card-header" style="height: 50px;">
+                            <h5 class="card-title mb-0">Venituri</h5>
                         </div>
-                        <div class="d-flex justify-content-center align-items-center" style="height: 140px;">
-                            <div class="row text-white text-center w-100">
-                                <!-- Latest Revenue -->
-                                <div class="col-4">
-                                    <h5 class="mb-0 fw-semibold" id="rev-latest">2,945 mnRON</h5>
-                                </div>
-                            
-                                <!-- Divider -->
-                                <div class="col-auto">
-                                    <span class="text-white-150">|</span>
-                                </div>
-                            
-                                <!-- YoY Change -->
-                                <div class="col-3">
-                                    <h5 class="mb-0 fw-semibold" id="rev-change">+17.3% a/a</h5>
-                                </div>
-                            
-                                <!-- Divider -->
-                                <div class="col-auto">
-                                    <span class="text-white-150">|</span>
-                                </div>
-                            
-                                <!-- Period -->
-                                <div class="col-3">
-                                    <h5 class="mb-0 fw-semibold" id="rev-period">FY/2024</h5>
-                                </div>
+                        <div class="d-flex justify-content-between align-items-center text-white text-center" style="height: 80px; gap: 16px; white-space: nowrap; overflow: hidden; width: calc(100% - 32px); margin: 0 16px;">
+                            <div><h5 class="mb-0 fw-semibold" id="rev-latest">2,945 mnRON</h5></div>
+                            <span class="text-white-150">|</span>
+                            <div><h5 class="mb-0 fw-semibold" id="rev-change">+17.3% a/a</h5></div>
+                            <span class="text-white-150">|</span>
+                            <div><h5 class="mb-0 fw-semibold" id="rev-period">FY/2024</h5></div>
+                        </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                              <canvas id="revenueChartCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            <div id="flotBar1" class="flot-chart" style="height: 300px;"></div>
-                        </div>
+                          </div>
                     </div>
                 </div>
            
                 <!-- Card 2 -->
                 <div class="col-md-4 mb-4">
                     <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
-                        <div class="card-header">
+                        <div class="card-header" style="height: 50px;">
                             <h5 class="card-title text-white">Venituri pe segmente</h5>
                         </div>
-                        <div class="card-body p-2 d-flex justify-content-center align-items-center">
-                            <div id="segmentRevenueChart" class="position-relative" style="height: 400px;">
-                                <canvas id="segmentRevenueChartCanvas" width="300" height="300"></canvas>
-                                <div id="donutCenterLabel" class="position-absolute top-50 start-50 translate-middle text-white text-center fw-semibold" style="pointer-events: none;"></div>
-                            </div>                                                     
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div id="segmentRevenueChart" class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                              <canvas id="segmentRevenueChartCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                              <div id="donutCenterLabel" class="position-absolute top-50 start-50 translate-middle text-white text-center fw-semibold" style="pointer-events: none;"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -322,40 +303,19 @@
                 <!-- Card 3 -->
                 <div class="col-md-4 mb-4">
                     <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
-                        <div class="card-header">
+                        <div class="card-header" style="height: 50px;">
                             <h5 class="card-title text-white">Profit net</h5>
                         </div>
-                        <div class="d-flex justify-content-center align-items-center" style="height: 140px;">
-                            <div class="row text-white text-center w-100">
-                                <!-- Latest Revenue -->
-                                <div class="col-4">
-                                    <h5 class="mb-0 fw-semibold" id="rev-latest">90.1 mnRON</h5>
-                                </div>
-                            
-                                <!-- Divider -->
-                                <div class="col-auto">
-                                    <span class="text-white-150">|</span>
-                                </div>
-                            
-                                <!-- YoY Change -->
-                                <div class="col-3">
-                                    <h5 class="mb-0 fw-semibold" id="rev-change">-7.0% a/a</h5>
-                                </div>
-                            
-                                <!-- Divider -->
-                                <div class="col-auto">
-                                    <span class="text-white-150">|</span>
-                                </div>
-                            
-                                <!-- Period -->
-                                <div class="col-3">
-                                    <h5 class="mb-0 fw-semibold" id="rev-period">FY/2024</h5>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="card-body p-2 d-flex justify-content-center align-items-center">
-                            <div id="ProfitmarginChart" class="position-relative w-100" style="height: 380px;">
-                            <canvas id="profitabilityChartCanvas"></canvas>
+                        <div class="d-flex justify-content-between align-items-center text-white text-center" style="height: 80px; gap: 16px; white-space: nowrap; overflow: hidden; width: calc(100% - 32px); margin: 0 16px;">
+                            <div><h5 class="mb-0 fw-semibold" id="rev-latest">90.1 mnRON</h5></div>
+                            <span class="text-white-150">|</span>
+                            <div><h5 class="mb-0 fw-semibold" id="rev-change">-7.0% a/a</h5></div>
+                            <span class="text-white-150">|</span>
+                            <div><h5 class="mb-0 fw-semibold" id="rev-period">FY/2024</h5></div>
+                          </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div id="ProfitmarginChart" class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                              <canvas id="profitabilityChartCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
                             </div>
                         </div>
                     </div>
@@ -900,68 +860,110 @@ const chartTheme = {
     hover: 'rgba(111, 66, 193, 0.7)',
     active: '#4f2e9b'
   }
-};
+}
+
+Chart.register(ChartDataLabels);
 
 function loadRevenueChart() {
     fetch('/revenue_data/{{ ticker }}')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error("Backend returned an error");
+            return response.json();
+        })
         .then(data => {
-            const maxVal = Math.max(...data.values.map(Number));
-            const roundedMax = Math.ceil(maxVal / 1_000_000 / 4) * 1_000_000; // Rounded step for 5 ticks
-            const plotData = [{
-                data: data.values.map((val, i) => [i, Number(val)]),
-                bars: {
-                    show: true,
-                    barWidth: 0.6,
-                    align: "left",
-                    fillColor: "#ff6175",
-                    lineWidth: 0
-                },
-            }];
-
-            const barWidth = 0.6;
-            const ticks = data.periods.map((label, i) => [i + barWidth / 2, label]);
-
-
-            $.plot($("#flotBar1"), plotData, {
-                xaxis: {
-                    ticks: ticks,
-                    font: {color: "#fff", size: 12, family: "Poppins"}
-                },
-                yaxis: {
-                    min:0,
-                    max:roundedMax*4,
-                    tickSize: roundedMax,
-                    tickFormatter: function (val) {return (val / 1_000_000).toLocaleString("en-US", { maximumFractionDigits:0}) + "mn";},
-                    font: {color: "#fff", size: 12, family: "Poppins"}},
-                grid: {borderWidth: 0, 
-                      hoverable: true, 
-                      markings: [
-                        // Y-axis line at x = 0
-                        { color: 'rgba(255,255,255,0.3)', lineWidth: 1, xaxis: { from: 0, to: 0 } },
-                        // X-axis line at y = 0
-                        { color: 'rgba(255,255,255,0.3)', lineWidth: 1, yaxis: { from: 0, to: 0 } }
-                    ]}
-            });
-            if (!document.getElementById("tooltip")) {
-                $("<div id='tooltip' class='tooltipflot'></div>").hide().appendTo("body");
+            if (!data || !data.values?.length || !data.periods?.length) {
+                console.warn("🚫 Incomplete revenue data");
+                return;
             }
 
-            $("#flotBar1").bind("plothover", function (event, pos, item) {
-                if (item) {
-                    const value = item.datapoint[1];
+            const canvas = document.getElementById("revenueChartCanvas");
+            if (!canvas) {
+                console.error("❌ Canvas element not found");
+                return;
+            }
 
-                    $("#tooltip")
-                        .html(`${(value / 1_000_000).toLocaleString("en-US", { maximumFractionDigits: 0 })} mnRON`)
-                        .css({ top: item.pageY - 40, left: item.pageX + 10 })
-                        .fadeIn(200);
-                } else {
-                    $("#tooltip").hide();
+            const ctx = canvas.getContext("2d");
+            const values = data.values.map(val => Number(val) / 1_000_000); // Convert to mn RON
+            const labels = data.periods;
+            const maxVal = Math.max(...values);
+
+            const niceMax = Math.ceil(maxVal / 100) * 100;
+            const step = Math.ceil(niceMax / 4);
+            const roundedMax = step * 4;
+
+            if (window.revenueChartInstance) {
+                window.revenueChartInstance.destroy();
+            }
+
+            Chart.defaults.font.family = 'Poppins';
+
+            window.revenueChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Venituri',
+                        data: values,
+                        backgroundColor: chartTheme.primary.base,
+                        hoverBackgroundColor: chartTheme.primary.hover,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: roundedMax,
+                            ticks: {
+                                stepSize: step,
+                                color: '#fff',
+                                callback: value => `${value.toLocaleString("en-US", { maximumFractionDigits: 0 })} mn`
+                            },
+                            border: {
+                                display: true,
+                                color: 'rgba(255,255,255,0.3)',
+                                width: 1
+                            }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: {
+                                display: true,
+                                color: 'rgba(255,255,255,0.3)',
+                                width: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        datalabels: { display: false },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(240,240,240,0.2)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderWidth: 0,
+                            titleFont: { weight: 'bold' },
+                            bodyFont: { weight: 'bold' },
+                            callbacks: {
+                                label: function (ctx) {
+                                    return `Venituri: ${ctx.raw.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mnRON`;
+                                }
+                                }
+
+                        }
+                    }
                 }
-});
-
+            });
         })
-        .catch(err => console.error("❌ Error loading chart data", err));
+        .catch(err => {
+            console.error("❌ Revenue chart load failed:", err);
+        });
 }
 
 function loadSegmentRevenueChart() {
@@ -988,13 +990,18 @@ function loadSegmentRevenueChart() {
             const values = segments.map(item => item.value);
             const total = values.reduce((a, b) => a + b, 0);
 
-            const backgroundColors = ["#53CAFD", "#f25521", "#F7B00F"];
+            // 🎨 Use 5 colors from chartTheme
+            const backgroundColors = [
+                chartTheme.orange.base,
+                chartTheme.teal.base,
+                chartTheme.cyan.base,
+                chartTheme.pink.base,
+                chartTheme.primary.base
+            ];
 
             if (window.segmentRevenueChartInstance) {
                 window.segmentRevenueChartInstance.destroy();
             }
-
-            Chart.register(ChartDataLabels); // ✅ Only register datalabels
 
             const ctx = document.getElementById("segmentRevenueChartCanvas").getContext("2d");
 
@@ -1013,13 +1020,25 @@ function loadSegmentRevenueChart() {
                     }]
                 },
                 options: {
-                    rotation: 65,
-                    layout: { padding: 25 },
+                    rotation: 35,
                     cutout: '60%',
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                color: '#fff',
+                                font: {
+                                    size: 12,
+                                    family: 'Poppins',
+                                    weight: 'bold'
+                                },
+                                padding: 12,
+                                boxWidth: 16
+                            }
+                        },
                         datalabels: {
                             color: '#fff',
                             font: {
@@ -1029,17 +1048,12 @@ function loadSegmentRevenueChart() {
                             },
                             align: 'end',
                             anchor: 'end',
-                            offset: ctx => {
-                                const label = ctx.chart.data.labels[ctx.dataIndex];
-                                return label === 'Transport' ? 30 : 14;
-                            },
+                            offset: 14,
                             formatter: (value, ctx) => {
-                                const label = ctx.chart.data.labels[ctx.dataIndex];
                                 const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
                                 const pct = ((value / total) * 100).toFixed(1);
-
-                                return `${label}, ${pct}%`;  // 🔁 Replaces line break with comma
-                                    }
+                                return `${pct}%`;
+                            }
                         }
                     }
                 }
@@ -1056,6 +1070,7 @@ function loadSegmentRevenueChart() {
                 `<p class='text-white'>Eroare la încărcarea datelor.</p>`;
         });
 }
+
 
 function loadProfitabilityChart() {
     fetch('/profit_and_margin_data/{{ ticker }}')
@@ -1210,10 +1225,11 @@ function loadProfitabilityChart() {
                         }
                     }
                 }
-            })
-        .catch(err => {
-            console.error("❌ Chart load failed:", err);});
-})}
+            });
+        })
+        .catch(err => {console.error("❌ Chart load failed:", err);});
+}
+
 
 // --- Setup Event Listeners ---
 document.addEventListener("DOMContentLoaded", function () {
