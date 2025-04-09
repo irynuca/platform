@@ -26725,3 +26725,14 @@ thead.thead {
   white-space: nowrap;
 }
 
+p.tight {
+  margin: 0;
+  padding: 0;
+  line-height: 1.8; /* or adjust for readability */
+}
+
+.card-body p:hover {
+  color: #fff;              /* Make text white on hover */
+  cursor: pointer;          /* Show pointer cursor */
+}
+

@@ -229,7 +229,9 @@
                             <h5 class="card-title text-white">Despre companie</h5>
                         </div>
                         <div class="card-body">
-                            <p class="card-text text-white">{{ business_description }}</p>
+                            {% for paragraph in business_description.split('\n') %}
+                            <p class="tight">{{ paragraph.strip() }}</p>
+                            {% endfor %}
                         </div>
                     </div>
                 </div>

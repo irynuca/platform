@@ -28,12 +28,21 @@ def fetch_with_retry(ticker, retries=3, delay=5):
 
 def get_yahoo_stock_price(ticker):
     stock = fetch_with_retry(ticker + ".RO")
-    info = stock.info  # ✅ Retrieve stock info
+    info = stock.info
 
     if not info:
         return{"error":f"Stock data not found for {ticker}"}
     
     company_name = info.get("longName") or info.get("shortName") or ticker
+
+    # Get business description from local file
+    txt_filename = f"{ticker.upper()}_about_ro.txt"
+    txt_path = os.path.join("C:/Users/irina/Project Element/Data source", ticker.upper(), txt_filename)
+    try:
+        with open(txt_path, "r", encoding="utf-8") as f:
+            business_description = f.read().strip()
+    except FileNotFoundError:
+        business_description = "Descrierea companiei nu este disponibilă (fișierul local lipsește)."
 
     stock_data = {
         "company_name": company_name,
@@ -44,7 +53,7 @@ def get_yahoo_stock_price(ticker):
         "net_income": f"{round(info.get('netIncomeToCommon', 0) / 1e9, 2)}md RON" if "netIncomeToCommon" in info else "N/A",
         "pe_ratio": f"{round(info.get('trailingPE', 0), 2)}x" if "trailingPE" in info else "N/A",
         "next_earnings_date": datetime.utcfromtimestamp(info["earningsTimestamp"]).strftime('%Y-%m-%d') if "earningsTimestamp" in info and isinstance(info["earningsTimestamp"], (int, float)) else "N/A",
-        "longBusinessSummary": info.get("longBusinessSummary", "Descrierea companiei nu este disponibilă.")
+        "longBusinessSummary": business_description
     }
 
     return stock_data
