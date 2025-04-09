@@ -112,3 +112,7 @@ def segment_revenue_data(ticker):
 def profit_and_margin_data(ticker):
     data=get_profit_and_margin_data(ticker)
     return jsonify(data)
+
+@main.route("/app-calender.html")
+def calender():
+    return render_template("app-calender.html", tickers=tickers)
