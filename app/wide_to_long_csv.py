@@ -21,11 +21,11 @@ def convert_csv_to_long_format(input_file, output_file, metadata_rows=10):
     print("📥 Reading wide-format CSV...")
     df = pd.read_csv(input_file, header=None)
     metadata = df.iloc[:metadata_rows]
-
     # Extract financial data and clean
-    df_metrics = df.iloc[metadata_rows:].dropna(how="any")
+    df_metrics = df.iloc[metadata_rows:]
     df_metrics[0] = df_metrics[0].astype(str).str.strip()
     df_metrics_transposed = df_metrics.set_index(0).T
+    print("transposed metrics \n", df_metrics_transposed)
 
     # Add metadata rows as new columns
     for i in range(metadata_rows):
@@ -34,28 +34,32 @@ def convert_csv_to_long_format(input_file, output_file, metadata_rows=10):
     metadata_columns = list(metadata.iloc[:, 0])
     valid_metric_columns = df_metrics_transposed.columns.difference(metadata_columns, sort=False).tolist()
     df_final = df_metrics_transposed[metadata_columns + valid_metric_columns]
+ 
 
     df_long = df_final.melt(
         id_vars=metadata_columns,
-        var_name="metric_name",
+        var_name="metric_name_ro",
         value_name="value"
     )
-
+    print("df_long: \n", df_long)
     # Optional: Remove rows with missing metric names or values
-    df_long = df_long.dropna(subset=["metric_name", "value"], how="all")
+    df_long = df_long.dropna(subset=["metric_name_ro", "value"], how="all")
 
     df_long.to_csv(output_file, index=False)
     print("✅ CSV successfully transformed to long format!")
     return df_long
 
 
-def update_financials_db_from_csv(csv_file, db_path, ticker, statement_name):
+def update_financials_db_from_csv(output_file, db_path, ticker, statement_name):
     print("🗃️ Updating SQLite database...")
 
-    df = pd.read_csv(csv_file)
-    df = df[(df["company_ticker"] == ticker) & (df["statement_name"] == statement_name)]
+    df = pd.read_csv(output_file)
+    print(df)
+    df["company_ticker"] = df["company_ticker"].astype(str).str.strip().str.upper()
+    df["statement_name"] = df["statement_name"].astype(str).str.strip().str.title()
 
-    print(f"➡️ Preparing to insert {len(df)} rows for {ticker} - {statement_name}")
+    ticker = ticker.strip().upper()
+    statement_name = statement_name.strip().title()
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -74,12 +78,12 @@ def update_financials_db_from_csv(csv_file, db_path, ticker, statement_name):
         cursor.execute("""
             INSERT INTO financial_data (
                 company_ticker, statement_name, statement_type, period_start,
-                period_end, period_type, aggr_type, currency, metric_name, value
+                period_end, period_type, aggr_type, currency, metric_name_ro, value
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             row["company_ticker"], row["statement_name"], row["statement_type"], period_start,
-            period_end, row["period_type"], row["aggr_type"], row["currency"], row["metric_name"], row["value"]
+            period_end, row["period_type"], row["aggr_type"], row["currency"], row["metric_name_ro"], row["value"]
         ))
 
     conn.commit()

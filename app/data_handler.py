@@ -3,37 +3,188 @@ import pandas as pd
 import sqlite3
 import os
 import plotly.graph_objects as go
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import re
 from collections import OrderedDict
 from collections import defaultdict
+import time
+from babel.dates import format_date
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Path to app/ directory
 DATA_DIR = os.path.join(BASE_DIR, "data")  # Path to data/
 COMPANY_INFO_FILE = os.path.join(DATA_DIR, "company_info.csv")  # Full path to CSV
 DB_PATH = os.path.join(DATA_DIR, "financials.db")  # Full path to database
 
-import time
+def get_company_details_from_db(ticker):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, industry FROM companies WHERE ticker = ?", (ticker.upper(),))
+        result = cursor.fetchone()
+        if result:
+            return {"company_name": result[0], "industry": result[1]}
+        else:
+            return {"company_name": ticker, "industry": "N/A"}
+    except Exception as e:
+        print(f"Database error while fetching company details: {e}")
+        return {"company_name": ticker, "industry": "N/A"}
+    finally:
+        conn.close()
 
-def fetch_with_retry(ticker, retries=3, delay=5):
-    for attempt in range(retries):
-        try:
-            return yf.Ticker(ticker)
-        except Exception as e:
-            print(f"Retry {attempt + 1} failed: {e}")
-            time.sleep(delay)
-    raise Exception("Yahoo Finance API failed after multiple retries.")
 
+def get_latest_stock_indicators(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    query = """
+        SELECT close_price, market_cap, pe_ratio, date
+        FROM stock_data
+        WHERE ticker = ?
+        ORDER BY ABS(julianday(date) - julianday('now')) ASC
+        LIMIT 1
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, (ticker.upper(),))
+        result = cursor.fetchone()
+        if result:
+            return {
+                "last_price": result[0],
+                "market_cap": result[1],
+                "pe_ratio": result[2],
+                "ref_date": result[3]  # Optional: for debug or display
+            }
+        else:
+            return {
+                "last_price": "N/A",
+                "market_cap": "N/A",
+                "pe_ratio": "N/A",
+                "ref_date": "N/A"
+            }
+    except Exception as e:
+        print(f"Error retrieving stock indicators: {e}")
+        return {
+            "last_price": "N/A",
+            "market_cap": "N/A",
+            "pe_ratio": "N/A",
+            "ref_date": "N/A"
+        }
+    finally:
+        conn.close()
 
-def get_yahoo_stock_price(ticker):
-    stock = fetch_with_retry(ticker + ".RO")
-    info = stock.info
+def get_latest_net_income(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    query = """
+        SELECT f.value
+        FROM financial_data f
+        JOIN financial_metrics m ON f.metric_name_ro = m.metric_name_ro
+        WHERE f.company_ticker = ?
+        AND m.generalized_metric_eng = 'Net profit a.m.'
+        ORDER BY ABS(julianday(f.period_end) - julianday('now')) ASC
+        LIMIT 1
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, (ticker.upper(),))
+        result = cursor.fetchone()
+        return float(str(result[0]).replace(",", "")) if result else "N/A"
+    except Exception as e:
+        print(f"Error retrieving net income: {e}")
+        return "N/A"
+    finally:
+        conn.close()
 
-    if not info:
-        return{"error":f"Stock data not found for {ticker}"}
+def format_date_ro(date_str):
+    try:
+        date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+        return format_date(date_obj, format="d MMMM y", locale="ro_RO")
+    except:
+        return date_str
     
-    company_name = info.get("longName") or info.get("shortName") or ticker
+def get_next_earnings_date(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    query = """
+        SELECT event_date 
+        FROM company_events 
+        WHERE ticker = ? AND event_type = 'earnings_release' AND event_date >= date('now')
+        ORDER BY event_date ASC 
+        LIMIT 1
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, (ticker.upper(),))
+        result = cursor.fetchone()
+        return result[0] if result else "N/A"
+    except Exception as e:
+        print(f"Error retrieving earnings date: {e}")
+        return "N/A"
+    finally:
+        conn.close()
+
+def get_latest_price_variation(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    query = """
+        SELECT change_day
+        FROM stock_data
+        WHERE ticker = ?
+          AND change_day IS NOT NULL
+        ORDER BY ABS(julianday(date) - julianday('now')) ASC
+        LIMIT 1
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, (ticker.upper(),))
+        result = cursor.fetchone()
+        return round(result[0], 2) if result else "N/A"
+    except Exception as e:
+        print(f"Error retrieving daily price variation: {e}")
+        return "N/A"
+    finally:
+        conn.close()
+
+def get_latest_variation_changes(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    query = """
+        SELECT change_yoy, change_ytd
+        FROM stock_data
+        WHERE ticker = ?
+          AND change_yoy IS NOT NULL
+          AND change_ytd IS NOT NULL
+        ORDER BY ABS(julianday(date) - julianday('now')) ASC
+        LIMIT 1
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query, (ticker.upper(),))
+        result = cursor.fetchone()
+        if result:
+            return {
+                "yoy_change": round(result[0], 2),
+                "ytd_change": round(result[1], 2)
+            }
+        else:
+            return {
+                "yoy_change": "N/A",
+                "ytd_change": "N/A"
+            }
+    except Exception as e:
+        print(f"Error retrieving YoY/YTD changes: {e}")
+        return {
+            "yoy_change": "N/A",
+            "ytd_change": "N/A"
+        }
+    finally:
+        conn.close()
+
+def get_stock_overview(ticker):
+    """
+    Combines company details, market indicators, income, and events into a single dictionary used for frontend display.
+    """
+    company_details = get_company_details_from_db(ticker)
+    indicators = get_latest_stock_indicators(ticker)
+    net_income = get_latest_net_income(ticker)
+    earnings_date = get_next_earnings_date(ticker)
+    variation_changes = get_latest_variation_changes(ticker)
+
 
     # Get business description from local file
     txt_filename = f"{ticker.upper()}_about_ro.txt"
@@ -45,73 +196,67 @@ def get_yahoo_stock_price(ticker):
         business_description = "Descrierea companiei nu este disponibilă (fișierul local lipsește)."
 
     stock_data = {
-        "company_name": company_name,
-        "last_price": info.get("regularMarketPrice", "N/A"),
-        "price_variation": round(info.get("regularMarketChangePercent", 0), 2) if "regularMarketChangePercent" in info else "N/A",
-        "market_cap": f"{round(info.get('marketCap', 0) / 1e9, 2)}md RON" if "marketCap" in info else "N/A",
-        "industry": info.get("industry", "N/A"),
-        "net_income": f"{round(info.get('netIncomeToCommon', 0) / 1e9, 2)}md RON" if "netIncomeToCommon" in info else "N/A",
-        "pe_ratio": f"{round(info.get('trailingPE', 0), 2)}x" if "trailingPE" in info else "N/A",
-        "next_earnings_date": datetime.utcfromtimestamp(info["earningsTimestamp"]).strftime('%Y-%m-%d') if "earningsTimestamp" in info and isinstance(info["earningsTimestamp"], (int, float)) else "N/A",
-        "longBusinessSummary": business_description
-    }
+    "company_name": company_details["company_name"],
+    "industry": company_details["industry"],
+    "last_price": indicators["last_price"],  # raw
+    "price_variation": get_latest_price_variation(ticker),
+    "market_cap": indicators["market_cap"],  # raw
+    "pe_ratio": indicators["pe_ratio"],      # raw
+    "net_income": net_income,                # raw
+    "next_earnings_date": format_date_ro(earnings_date),
+    "longBusinessSummary": business_description,
+    "yoy_change": variation_changes["yoy_change"],
+    "ytd_change": variation_changes["ytd_change"],
+
+}
 
     return stock_data
-
-def get_company_info(ticker):
-    """
-    Fetch company details (Name, Sector, Market Cap, etc.) from company_info.csv.
-    """
-    if not os.path.exists(COMPANY_INFO_FILE):
-        print(f"❌ ERROR: CSV file not found at {COMPANY_INFO_FILE}")  # Show exact path
-        return None
-
-    df = pd.read_csv(COMPANY_INFO_FILE)
-
-    # Convert tickers to uppercase to avoid case-sensitivity issues
-    df["ticker"] = df["ticker"].str.upper()
-
-    # Find the stock in the dataframe
-    company_data = df[df["ticker"] == ticker.upper()].to_dict(orient="records")
-
-    return company_data[0] if company_data else None  # Return first match or None
-
-def get_stock_data(ticker):
-    """
-    Combine Yahoo price data with company fundamentals.
-    """
-    company_info = get_company_info(ticker)
-    yahoo_data = get_yahoo_stock_price(ticker)
-
-    if not company_info:
-        print(f"Error: Ticker {ticker} not found in CSV")
-        return None  # Return None if company is not found
-
-    return {**company_info, **yahoo_data}  # Merge company info & price data
 
 def get_historical_stock_data(ticker, period="1mo", interval="1d"):
-    stock=fetch_with_retry(ticker + ".RO")
-    # Adjust interval depending on the period
-    if period in ["1d", "5d"]:
-        interval = "30m"
-    elif period in ["1mo", "3mo"]:
-        interval = "1d"
-    elif period == "1y":
-        interval = "1wk"
-    elif period in ["5y", "max"]:
-        interval = "1mo"
-    history=stock.history(period=period, interval=interval, prepost=False, actions=False)
-    if history.empty:
-        return None
-    
-    stock_data={
-        "dates":history.index.strftime("%Y-%m-%d").tolist(),
-        "prices":history["Close"].tolist()
+    conn=sqlite3.connect(DB_PATH)
+        # Map period to number of days
+    period_map = {
+        "1d": 1,
+        "5d": 5,
+        "1mo": 30,
+        "3mo": 90,
+        "1y": 365,
+        "5y": 1825,
+        "max": None  # Special case: no filter
     }
 
-    return stock_data
+    try:
+        days = period_map.get(period, 30)
+        query = "SELECT date, close_price FROM stock_data WHERE ticker = ?"
+        params = [ticker.upper()]
 
-DB_PATH = "c:\\Irina\\Mosaiq8\\app\\data\\financials.db"
+        if days is not None:
+            cutoff = (datetime.today() - timedelta(days=days)).strftime("%Y-%m-%d")
+            query += " AND date >= ?"
+            params.append(cutoff)
+
+        query += " ORDER BY date ASC"
+
+        df = pd.read_sql_query(query, conn, params=params)
+        if df.empty:
+            return None
+
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.sort_values("date")
+
+        stock_data = {
+            "dates": df["date"].dt.strftime("%Y-%m-%d").tolist(),
+            "prices": df["close_price"].tolist()
+        }
+
+        return stock_data
+
+    except Exception as e:
+        print(f"❌ Error retrieving historical data: {e}")
+        return None
+
+    finally:
+        conn.close()
 
 def get_financial_statement(ticker, statement_name, period_type, aggr_type):
     conn = sqlite3.connect(DB_PATH)

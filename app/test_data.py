@@ -11,38 +11,59 @@ DATA_DIR = os.path.join(BASE_DIR, "data")  # Path to data/
 COMPANY_INFO_FILE = os.path.join(DATA_DIR, "company_info.csv")  # Full path to CSV
 DB_PATH = os.path.join(DATA_DIR, "financials.db")  # Full path to database
 
-# Load and print CSV to check if it's loading correctly
-if os.path.exists(COMPANY_INFO_FILE):
-    df = pd.read_csv(COMPANY_INFO_FILE)
-    print("✅ CSV File Loaded Successfully!")
-    print(df.head())  # Print first few rows of CSV
-else:
-    print("❌ ERROR: CSV file not found!")
 
-import yfinance as yf
+#------------------------ Test_data_handler.py upper part of stock_analysis.html---------------------------------------------------
 
-ticker = "SNP.RO"  # Change this to test different stocks
+from data_handler import (
+    get_company_details_from_db,
+    get_latest_stock_indicators,
+    get_latest_net_income,
+    get_next_earnings_date,
+    get_stock_overview
+)
 
-stock = yf.Ticker(ticker)
+def test_company_details(ticker):
+    print("➡️ Testing get_company_details_from_db")
+    details = get_company_details_from_db(ticker)
+    print("Result:", details)
+    print()
 
-# Fetch historical stock prices (1 day)
-data = stock.history(period="1d")
-print("\n📊 STOCK PRICE HISTORY:")
-print(data)
+def test_stock_indicators(ticker):
+    print("➡️ Testing get_latest_stock_indicators")
+    indicators = get_latest_stock_indicators(ticker)
+    print("Result:", indicators)
+    print()
 
-# Fetch all fundamental company details
-info = stock.info
+def test_net_income(ticker):
+    print("➡️ Testing get_latest_net_income")
+    net_income = get_latest_net_income(ticker)
+    print("Result:", net_income)
+    print()
 
-# Check if 'earningsTimestamp' exists
-if "earningsTimestamp" in info:
-    earnings_date = datetime.utcfromtimestamp(info["earningsTimestamp"]).strftime('%Y-%m-%d %H:%M:%S UTC')
-    print(f"\n📅 Next Earnings Date: {earnings_date}")
-else:
-    print("\n❌ Earnings date not available for this stock.")
+def test_earnings_date(ticker):
+    print("➡️ Testing get_next_earnings_date")
+    earnings_date = get_next_earnings_date(ticker)
+    print("Result:", earnings_date)
+    print()
 
-print("\n📋 FUNDAMENTAL DATA (stock.info):")
-for key, value in info.items():
-    print(f"{key}: {value}")
+def test_full_stock_overview(ticker):
+    print("➡️ Testing get_stock_overview")
+    overview = get_stock_overview(ticker)
+    for key, value in overview.items():
+        print(f"{key}: {value}")
+    print()
+
+
+if __name__ == "__main__":
+    # Replace with a real ticker from your DB
+    sample_ticker = "AQ"
+
+    test_company_details(sample_ticker)
+    test_stock_indicators(sample_ticker)
+    test_net_income(sample_ticker)
+    test_earnings_date(sample_ticker)
+    test_full_stock_overview(sample_ticker)
+
 
 
 #--------------------Test if PL displays correctly in various combinations-----------------------------------------------------------------------------------

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from .data_handler import get_yahoo_stock_price, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios, get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data
+from .data_handler import get_stock_overview, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios, get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data
 import json
 
 main = Blueprint('main', __name__)
@@ -23,7 +23,7 @@ def analyze():
 # Analysis page with financials selection
 @main.route('/analysis/<ticker>', methods=['GET'])
 def analysis(ticker):
-    stock_info = get_yahoo_stock_price(ticker)
+    stock_info = get_stock_overview(ticker)
     historical_data = get_historical_stock_data(ticker)
 
     # Get period type and aggregation type from request (default: annual cumulative)
@@ -34,7 +34,6 @@ def analysis(ticker):
     bs_statement = get_financial_statement(ticker, "Balance Sheet", period_type, aggr_type)
     cf_statement = get_financial_statement(ticker, "Cash Flow", period_type, aggr_type)
     grouped_ratios = get_grouped_financial_ratios(ticker, period_type, aggr_type)
-    import json
     print("✅ Ratios statement sent to template:")
     print(json.dumps(grouped_ratios, indent=2, ensure_ascii=False))
     if "error" in stock_info:
@@ -59,8 +58,8 @@ def analysis(ticker):
 @main.route('/historical_data/<ticker>/<period>')
 def historical_data(ticker, period):
     data=get_historical_stock_data(ticker, period)
-    if not historical_data:
-        return jsonify({"error":"No available data"}), 404
+    if not data:
+        return jsonify({"error": "No available data"}), 404
     
     return jsonify(data)
 

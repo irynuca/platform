@@ -109,7 +109,7 @@
 
             <!-- Middle: Stock Price & Variation -->
             <div class="col-md-4 text-center">
-                <h3 class="fw-bold">{{ last_price }} RON</h3>
+                <h3 class="fw-bold">{{ last_price | round(2)}} RON</h3>
                 <p class="{% if price_variation|float >= 0 %}text-success{% else %}text-danger{% endif %}">
                     {{ price_variation }}%
                 </p>
@@ -136,7 +136,8 @@
         <div class="col-md-2">
             <div class="row">
                 <div class="col-12">
-                    <p class="fw-bold text-purple">{{ market_cap }}</p>
+                    <p class="fw-bold text-purple">{{ (market_cap / 1_000_000) | round(1) | string | replace('.', ',') }} mnRON
+                    </p>
                 </div>
                 <div class="col-12">
                     <p class="text-muted small">Capitalizare bursieră</p>
@@ -148,10 +149,10 @@
         <div class="col-md-2">
             <div class="row">
                 <div class="col-12">
-                    <p class="fw-bold text-purple">{{ yoy_change }} / {{ ytd_change }}</p>
+                    <p class="fw-bold text-purple">{{ yoy_change }} % / {{ ytd_change }} %</p>
                 </div>
                 <div class="col-12">
-                    <p class="text-muted small">YoY Change / YTD Change</p>
+                    <p class="text-muted small">var. an/an / din ian.</p>
                 </div>
             </div>
         </div>
@@ -160,7 +161,7 @@
         <div class="col-md-2">
             <div class="row">
                 <div class="col-12">
-                    <p class="fw-bold text-purple">{{ pe_ratio }}x</p>
+                    <p class="fw-bold text-purple">{{ pe_ratio | round(2) }}x</p>
                 </div>
                 <div class="col-12">
                     <p class="text-muted small">P/E</p>
@@ -172,7 +173,8 @@
         <div class="col-md-2">
             <div class="row">
                 <div class="col-12">
-                    <p class="fw-bold text-purple">{{ net_income }}</p>
+                    <p class="fw-bold text-purple">{{ (net_income / 1e6) | round(1) | string | replace('.', ',') }} mnRON
+                    </p>
                 </div>
                 <div class="col-12">
                     <p class="text-muted small">Profit net LTM</p>
