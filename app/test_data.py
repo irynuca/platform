@@ -82,3 +82,12 @@ print(get_segment_revenue_notes("AQ"))
 
 from data_handler import get_profit_and_margin_data
 print(get_profit_and_margin_data("AQ"))
+
+from data_handler import get_revenue_qtl_and_change_data
+print(get_revenue_qtl_and_change_data("AQ"))
+
+from data_handler import get_operating_profit_qtl_and_margin_data
+print(get_operating_profit_qtl_and_margin_data("AQ"))
+
+from data_handler import get_net_profit_qtl_and_margin_data
+print (get_net_profit_qtl_and_margin_data("AQ"))

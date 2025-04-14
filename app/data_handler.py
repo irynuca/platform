@@ -525,9 +525,9 @@ def get_segment_revenue_notes(ticker):
     # Step 2: Parse to datetime and find the latest
     try:
         latest_period = max(
-            (datetime.strptime(p[0], "%d/%m/%Y") for p in periods),
+            (datetime.strptime(p[0], "%Y-%m-%d") for p in periods),
             default=None
-        ).strftime("%d/%m/%Y")
+        ).strftime("%Y-%m-%d")
     except Exception as e:
         print(f"❌ Date parsing error: {e}")
         conn.close()
@@ -606,4 +606,220 @@ def get_profit_and_margin_data(ticker, period_type="annual", aggr_type="cml"):
         "profit": profit_values,
         "margin": margin_values
     }
+
+def get_revenue_qtl_and_change_data(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # --- Fetch Revenue from view_financial_qtl ---
+    cursor.execute("""
+        SELECT v.period_end, v.display_period, v.value
+        FROM view_financial_qtl v
+        JOIN financial_metrics m 
+        ON v.metric_name_ro = m.metric_name_ro
+        AND v.company_ticker = m.company_ticker
+        WHERE v.company_ticker = ?
+        AND m.generalized_metric_eng = 'Revenue'
+        ORDER BY v.period_end ASC
+    """, (ticker,))
+    revenue_data = cursor.fetchall()
+    print("Revenue data:", revenue_data)
+
+    cursor.execute("""
+        SELECT period_end, display_period, value
+        FROM view_financial_ratios_qtl
+        WHERE company_ticker = ? AND ratio_name_eng = 'Revenue growth y/y'
+        ORDER BY period_end ASC
+    """, (ticker,))
+    change_data = cursor.fetchall()
+    print("Revenue change data:", change_data)
+
+    conn.close()
+
+    # --- Normalize and match periods
+    revenue_dict = {row[0]: (row[1], row[2]) for row in revenue_data}  # period_end: (display_period, value)
+    change_dict = {row[0]: row[2] for row in change_data}  # ✅ value, not display_period
+
+    common_periods = sorted(
+    p for p in (set(revenue_dict.keys()) & set(change_dict.keys()))
+    if change_dict[p] is not None and revenue_dict[p][1] is not None)[-8:]
+
+    if not common_periods:
+        return None
+
+    periods = [revenue_dict[p][0] for p in common_periods]
+    revenues = [float(str(revenue_dict[p][1]).replace(",", "").replace(" ", "")) for p in common_periods]
+    change_rate = [float(str(change_dict[p]).replace(",", "").replace(" ", "")) for p in common_periods]
+
+    return {
+        "periods": periods,
+        "revenues": revenues,
+        "change_rate": change_rate
+    }
+
+
+def get_operating_profit_qtl_and_margin_data(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # --- Fetch Revenue from view_financial_qtl ---
+    cursor.execute("""
+        SELECT v.period_end, v.display_period, v.value
+        FROM view_financial_qtl v
+        JOIN financial_metrics m 
+        ON v.metric_name_ro = m.metric_name_ro
+        AND v.company_ticker = m.company_ticker
+        WHERE v.company_ticker = ?
+        AND m.generalized_metric_eng = 'Operating profit'
+        ORDER BY v.period_end ASC
+    """, (ticker,))
+
+    operating_profit_data = cursor.fetchall()
+    print("Operating profit data:", operating_profit_data)
+
+    cursor.execute("""
+        SELECT period_end, display_period, value
+        FROM view_financial_ratios_qtl
+        WHERE company_ticker = ? AND ratio_name_eng = 'Operating profit margin'
+        ORDER BY period_end ASC
+    """, (ticker,))
+    operating_margin_data = cursor.fetchall()
+    print("Operating margin data:", operating_margin_data)
+
+    conn.close()
+
+    # --- Normalize and match periods
+    operating_profit_dict = {row[0]: (row[1], row[2]) for row in operating_profit_data}
+    margin_dict = {row[0]: row[2] for row in operating_margin_data}  
+
+    common_periods = sorted(
+    p for p in (set(operating_profit_dict.keys()) & set(margin_dict.keys()))
+    if margin_dict[p] is not None and operating_profit_dict[p][1] is not None)[-8:]
+
+    if not common_periods:
+        return None
+
+    periods = [operating_profit_dict[p][0] for p in common_periods]
+    operating_profit = [float(str(operating_profit_dict[p][1]).replace(",", "").replace(" ", "")) for p in common_periods]
+    operating_margin = [float(str(margin_dict[p]).replace(",", "").replace(" ", "")) for p in common_periods]
+
+    return {
+        "periods": periods,
+        "operating_profit": operating_profit,
+        "operating_margin": operating_margin
+    }
+
+
+def get_net_profit_qtl_and_margin_data(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # --- Fetch Revenue from view_financial_qtl ---
+    cursor.execute("""
+        SELECT v.period_end, v.display_period, v.value
+        FROM view_financial_qtl v
+        JOIN financial_metrics m 
+        ON v.metric_name_ro = m.metric_name_ro
+        AND v.company_ticker = m.company_ticker
+        WHERE v.company_ticker = ?
+        AND m.generalized_metric_eng = 'Net profit a.m.'
+        ORDER BY v.period_end ASC
+    """, (ticker,))
+
+    net_profit_data = cursor.fetchall()
+    print("Net profit data:", net_profit_data)
+
+    cursor.execute("""
+        SELECT period_end, display_period, value
+        FROM view_financial_ratios_qtl
+        WHERE company_ticker = ? AND ratio_name_eng = 'Net profit margin'
+        ORDER BY period_end ASC
+    """, (ticker,))
+    net_margin_data = cursor.fetchall()
+    print("Operating margin data:", net_margin_data)
+
+    conn.close()
+
+    # --- Normalize and match periods
+    net_profit_dict = {row[0]: (row[1], row[2]) for row in net_profit_data}
+    margin_dict = {row[0]: row[2] for row in net_margin_data}  
+
+    common_periods = sorted(
+    p for p in (set(net_profit_dict.keys()) & set(margin_dict.keys()))
+    if margin_dict[p] is not None and net_profit_dict[p][1] is not None)[-8:]
+
+    if not common_periods:
+        return None
+
+    periods = [net_profit_dict[p][0] for p in common_periods]
+    net_profit = [float(str(net_profit_dict[p][1]).replace(",", "").replace(" ", "")) for p in common_periods]
+    net_margin = [float(str(margin_dict[p]).replace(",", "").replace(" ", "")) for p in common_periods]
+
+    return {
+        "periods": periods,
+        "net_profit": net_profit,
+        "net_margin": net_margin
+    }
+
+def get_chart_comment(ticker, chart_type, period_display):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT comment FROM chart_comments
+        WHERE company_ticker = ? AND chart_type = ? AND period_display = ?
+    """, (ticker, chart_type, period_display))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+def get_revenue_annual_and_change_data(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # --- Fetch Revenue from view_financial_qtl ---
+    cursor.execute("""
+        SELECT v.period_end, v.display_period, v.value
+        FROM view_financial_annual v
+        JOIN financial_metrics m 
+        ON v.metric_name_ro = m.metric_name_ro
+        AND v.company_ticker = m.company_ticker
+        WHERE v.company_ticker = ?
+        AND m.generalized_metric_eng = 'Revenue'
+        ORDER BY v.period_end ASC
+    """, (ticker,))
+    revenue_data = cursor.fetchall()
+    print("Revenue data:", revenue_data)
+
+    cursor.execute("""
+        SELECT period_end, display_period, value
+        FROM view_financial_ratios_annual
+        WHERE company_ticker = ? AND ratio_name_eng = 'Revenue growth y/y'
+        ORDER BY period_end ASC
+    """, (ticker,))
+    change_data = cursor.fetchall()
+    print("Revenue change data:", change_data)
+
+    conn.close()
+
+    # --- Normalize and match periods
+    revenue_dict = {row[0]: (row[1], row[2]) for row in revenue_data}  # period_end: (display_period, value)
+    change_dict = {row[0]: row[2] for row in change_data}  # ✅ value, not display_period
+
+    common_periods = sorted(
+    p for p in (set(revenue_dict.keys()) & set(change_dict.keys()))
+    if change_dict[p] is not None and revenue_dict[p][1] is not None)[-8:]
+
+    if not common_periods:
+        return None
+
+    periods = [revenue_dict[p][0] for p in common_periods]
+    revenues = [float(str(revenue_dict[p][1]).replace(",", "").replace(" ", "")) for p in common_periods]
+    change_rate = [float(str(change_dict[p]).replace(",", "").replace(" ", "")) for p in common_periods]
+
+    return {
+        "periods": periods,
+        "revenues": revenues,
+        "change_rate": change_rate
+    }
+
 

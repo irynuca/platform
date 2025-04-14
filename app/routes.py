@@ -1,5 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from .data_handler import get_stock_overview, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios, get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data
+from .data_handler import get_stock_overview, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios
+from .data_handler import get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data, get_revenue_qtl_and_change_data
+from .data_handler import get_operating_profit_qtl_and_margin_data, get_net_profit_qtl_and_margin_data, get_chart_comment, get_revenue_annual_and_change_data
 import json
 
 main = Blueprint('main', __name__)
@@ -25,6 +27,11 @@ def analyze():
 def analysis(ticker):
     stock_info = get_stock_overview(ticker)
     historical_data = get_historical_stock_data(ticker)
+    revenue_data = get_revenue_qtl_and_change_data(ticker)
+    latest_quarter = revenue_data["periods"][-1] if revenue_data and revenue_data["periods"] else "N/A"
+    comment_revenue_growth = get_chart_comment(ticker, "revenue_qtl_and_change_data", latest_quarter)
+    comment_operating_profit=get_chart_comment(ticker, "operating_profit_qtl_and_margin_data", latest_quarter)
+    comment_net_profit=get_chart_comment(ticker, "net_profit_qtl_and_margin_data", latest_quarter)
 
     # Get period type and aggregation type from request (default: annual cumulative)
     period_type = request.args.get('period_type', 'annual')
@@ -52,6 +59,10 @@ def analysis(ticker):
         grouped_ratios=grouped_ratios,
         selected_period_type=period_type,
         selected_aggr_type=aggr_type,
+        latest_quarter=latest_quarter,
+        comment_revenue_growth=comment_revenue_growth,
+        comment_operating_profit=comment_operating_profit,
+        comment_net_profit=comment_net_profit,
         **stock_info
     )
 
@@ -111,6 +122,27 @@ def segment_revenue_data(ticker):
 def profit_and_margin_data(ticker):
     data=get_profit_and_margin_data(ticker)
     return jsonify(data)
+
+@main.route("/revenue_qtl_and_change_data/<ticker>")
+def revenue_qtl_and_change_data(ticker):
+    data = get_revenue_qtl_and_change_data(ticker)
+    return jsonify(data)
+
+@main.route("/operating_profit_qtl_and_margin_data/<ticker>")
+def operating_profit_qtl_and_margin_data(ticker):
+    data=get_operating_profit_qtl_and_margin_data(ticker)
+    return jsonify(data)
+
+@main.route("/net_profit_qtl_and_margin_data/<ticker>")
+def net_profit_qtl_and_margin_data(ticker):
+    data=get_net_profit_qtl_and_margin_data(ticker)
+    return jsonify(data)
+
+@main.route("/revenue_annual_and_change_data/<ticker>")
+def revenue_annual_and_change_data(ticker):
+    data = get_revenue_annual_and_change_data(ticker)
+    return jsonify(data)
+
 
 @main.route("/app-calender.html")
 def calender():

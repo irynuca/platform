@@ -40,9 +40,13 @@ def get_prior_period_end(current_end: datetime, period_type: str, aggr_type: str
         # Set to last day of that month
         next_month = prior.replace(day=28) + relativedelta(days=4)
         # Return as string in dd/mm/yyyy format
-        return (next_month - relativedelta(days=next_month.day)).strftime("%d/%m/%Y")
+        return (next_month - relativedelta(days=next_month.day)).strftime("%Y-%m-%d")
 
     return None
+
+def get_yoy_period_end(current_end: datetime) -> str:
+    prior = current_end - relativedelta(years=1)
+    return prior.strftime("%Y-%m-%d")
 
 
 def gross_profit_margin(gross_profit, revenue):
@@ -76,6 +80,44 @@ def return_on_equity(net_income, equity_start, equity_end):
 
 def debt_to_assets(debt, assets):
     return safe_divide(debt, assets, multiplier=1)
+
+def get_growth_prior_period_end(current_end: datetime, ratio_key: str) -> str:
+    """
+    Returns the prior period end for growth-based ratios.
+    Supports y/y and q/q based on the ratio key.
+    """
+    if "y/y" in ratio_key.lower() or "yoy" in ratio_key.lower():
+        prior = current_end - relativedelta(years=1)
+    elif "q/q" in ratio_key.lower() or "qoq" in ratio_key.lower():
+        prior = current_end - relativedelta(months=3)
+    else:
+        # fallback for unexpected cases
+        return None
+    return prior.strftime("%Y-%m-%d")
+
+def rate_of_change(current: float, prior: float, multiplier: float = 100) -> float:
+    """
+    Computes the percentage rate of change between a current and prior value.
+    
+    Formula:
+        ((current - prior) / abs(prior)) * multiplier
+
+    Returns None if prior is None or zero (to avoid division error).
+
+    Args:
+        current (float): Current period value.
+        prior (float): Prior period value (must not be 0).
+        multiplier (float): Multiplier for scaling (default is 100 for %).
+
+    Returns:
+        float or None: Rate of change, or None if invalid.
+    """
+    if current is None or prior in (None, 0):
+        return None
+    try:
+        return ((current - prior) / abs(prior)) * multiplier
+    except Exception:
+        return None
 
 
 # Mapping of required metrics for each ratio
@@ -160,7 +202,35 @@ RATIO_DEFINITIONS = {
         "measure_unit": "%",
         "formula": "Datorii purtatoare de dobanda / Active total",
         "category": "Indatorare"
+    },
+    "Revenue growth y/y": {
+    "function": rate_of_change,
+    "required_metrics": {"Current revenue": "Revenue", "Prior revenue": "Revenue_prior"},
+    "ratio_name_ro": "Rata de crestere venituri (an/an)",
+    "ratio_name_eng": "Revenue growth y/y",
+    "measure_unit": "%",
+    "formula": "(Venituri curente - Venituri anterioare) / Venituri anterioare",
+    "category": "Rate de crestere"
+    },
+    "Operating profit growth y/y": {
+        "function": rate_of_change,
+        "required_metrics": {"Current op profit": "Operating profit", "Prior op profit": "Operating profit_prior"},
+        "ratio_name_ro": "Rata de crestere profit operational (an/an)",
+        "ratio_name_eng": "Operating profit growth y/y",
+        "measure_unit": "%",
+        "formula": "(Profit op curent - Profit op anterior) / Profit op anterior",
+        "category": "Rate de crestere"
+    },
+    "Net profit growth y/y": {
+        "function": rate_of_change,
+        "required_metrics": {"Current net profit": "Net profit a.m.", "Prior net profit": "Net profit a.m._prior"},
+        "ratio_name_ro": "Rata de crestere profit net (an/an)",
+        "ratio_name_eng": "Net profit growth y/y",
+        "measure_unit": "%",
+        "formula": "(Profit net curent - Profit net anterior) / Profit net anterior",
+        "category": "Rate de crestere"
     }
+
 
     # Additional ratios can be added here
 }
@@ -177,6 +247,7 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
         query_raw = f"""
             SELECT 
                 f.company_ticker,
+                f.period_start,
                 f.period_end,
                 f.period_type,
                 f.aggr_type,
@@ -195,6 +266,7 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
         query_raw = f"""
             SELECT 
                 f.company_ticker,
+                f.period_start,
                 f.period_end,
                 f.period_type,
                 f.aggr_type,
@@ -213,6 +285,7 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
         query_raw = f"""
             SELECT 
                 f.company_ticker,
+                f.period_start,
                 f.period_end,
                 f.period_type,
                 f.aggr_type,
@@ -233,6 +306,7 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
         query_derived = f"""
             SELECT
                 company_ticker,
+                period_start,
                 period_end,
                 period_type,
                 aggr_type,
@@ -250,6 +324,7 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
         query_derived = f"""
             SELECT
                 company_ticker,
+                period_start,
                 period_end,
                 period_type,
                 aggr_type,
@@ -267,6 +342,7 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
         query_derived = f"""
             SELECT
                 company_ticker,
+                period_start,
                 period_end,
                 period_type,
                 aggr_type,
@@ -284,7 +360,10 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
     # Combine both
     df = pd.concat([df_raw, df_derived], ignore_index=True)
 
-    print(df)
+    print(f"\n📊 Retrieved {len(df)} rows of raw + derived data for {ticker} - {ratio_key}")
+    print(f"\n📊 [Step 1] Combined data preview for {ticker} | {ratio_key}")
+    print(df.head(5))
+
     conn.close()
     df["value"] = pd.to_numeric(df["value"].astype(str).str.replace(",", "", regex=False).str.replace(" ", ""), errors="coerce")
     if df.empty:
@@ -304,44 +383,72 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
             return float(val)
         except (TypeError, ValueError):
             return None
-
-    
-
-    # Clean the values: remove commas, convert to float
-    
+        
     # Pivot the data: one row per period_end
-    df_pivot = df.pivot_table(index=["company_ticker", "period_end", "period_type", "aggr_type"], 
-                               columns="metric", values="value").reset_index()
-    # Convert period_end to datetime
-    df_pivot["period_end"] = pd.to_datetime(df_pivot["period_end"], dayfirst=True)
+    df_pivot = df.pivot_table(
+        index=["company_ticker", "period_start", "period_end", "period_type", "aggr_type"],
+        columns="metric",
+        values="value"
+    ).reset_index()
 
-    # Compute prior period_end for each row
-    df_pivot["prior_period_end"] = df_pivot.apply(lambda row: get_prior_period_end(row["period_end"], row["period_type"], row["aggr_type"]), axis=1)
+    # Convert period_end to datetime
+    df_pivot["period_start"] = pd.to_datetime(df_pivot["period_start"], format="%Y-%m-%d")
+    df_pivot["period_end"] = pd.to_datetime(df_pivot["period_end"], format="%Y-%m-%d")
+
+
+    # Compute prior_period_end using different logic for growth ratios
+    ratio_key_lower = ratio_key.lower()
+
+    if "growth" in ratio_key_lower:
+        if "y/y" in ratio_key_lower or "yoy" in ratio_key_lower:
+            growth_mode = "yoy"
+        elif "q/q" in ratio_key_lower or "qoq" in ratio_key_lower:
+            growth_mode = "qoq"
+        else:
+            raise ValueError(f"❌ Cannot determine growth type for: {ratio_key}")
+        
+        print(f"📈 Growth ratio detected → Using {growth_mode.upper()} logic for prior_period_end.")
+        df_pivot["prior_period_end"] = df_pivot["period_end"].apply(lambda d: get_growth_prior_period_end(d, growth_mode))
+
+    else:
+        print(f"📊 Non-growth ratio → Using default logic based on period_type and aggr_type.")
+        df_pivot["prior_period_end"] = df_pivot.apply(
+            lambda row: get_prior_period_end(row["period_end"], row["period_type"], row["aggr_type"]),
+            axis=1
+        )
+
+
+    print(f"\n🧹 [Step 2] Pivoted data (one row per period_end):")
+    print(df_pivot.head(3))
 
     current_df = df_pivot.copy()
   
+    current_df["prior_period_end"] = current_df["prior_period_end"].astype(str)
+    current_df["period_end"] = current_df["period_end"].astype(str)
 
-    current_df["prior_period_end"] = current_df["prior_period_end"].apply(
-    lambda x: x.strftime("%d/%m/%Y") if isinstance(x, (datetime, pd.Timestamp)) else x)
-    current_df["period_end"] = current_df["period_end"].apply(
-    lambda x: x.strftime("%d/%m/%Y") if isinstance(x, (datetime, pd.Timestamp)) else x)
+    print(f"\n⏳ [Step 3] With prior_period_end calculated:")
+    print(current_df[["period_end", "prior_period_end"]].tail(3))
 
-    print(current_df)
     # Create a prior_df that doesn't include "prior_period_end"
     prior_df = current_df.copy()
     prior_df = prior_df.drop(columns=["prior_period_end"], errors="ignore")
     prior_df = prior_df.rename(columns={"period_end": "prior_period_end"})
 
     # Merge
+    suffix = "_prior" if "growth" in ratio_key.lower() else "_begin"
     merged = pd.merge(current_df, prior_df, how="left",
-        on=["company_ticker", "prior_period_end"], suffixes=("", "_begin"))
+            on=["company_ticker", "prior_period_end"], suffixes=("", suffix))
 
+    # Check if all required columns exist before debug print or computation
+    required_columns = list(ratio_def["required_metrics"].values())
+    missing_columns = [col for col in required_columns if col not in merged.columns]
+
+    if missing_columns:
+        print(f"⚠️ Skipping '{ratio_key}' for {ticker} ({period_type}, {aggr_type}) — missing metrics: {missing_columns}")
+        return f"Skipped: missing columns {missing_columns} for {ratio_key}"
     
-    print("\n🔁 Merged df")
-    print(merged.tail(20))
-
-    #print("\n📋 dtypes before calculation:")
-    #print(merged.dtypes)
+    print(f"\n🔁 [Step 4] Merged current vs prior:")
+    print(merged[["company_ticker", "period_end", "prior_period_end"] + list(ratio_def["required_metrics"].values())].tail(3))
 
     # Calculate the ratio
     results = []
@@ -360,6 +467,7 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
 
         results.append({
             "company_ticker": row["company_ticker"],
+            "period_start": row["period_start"],            
             "period_end": row["period_end"],
             "period_type": row["period_type"],
             "aggr_type": row["aggr_type"],
@@ -371,13 +479,19 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
             "formula": ratio_def["formula"],
             "calculated_at": datetime.now().isoformat()
         })
-        print(results)
+        print(f"\n🔍 [Step 5] Computing ratio: {ratio_key} for {row['company_ticker']} | {row['period_type']} | {row['aggr_type']} | period_end: {row['period_end']}")
+        for label, std_name in ratio_def["required_metrics"].items():
+            print(f"   - {label}: {row.get(std_name)}")
+
+        print(f"   ➕ Result: {val}")
+
     # Insert into financial_ratios table
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS financial_ratios (
             company_ticker TEXT,
+            period_start DATE,
             period_end DATE,
             period_type TEXT,
             aggr_type TEXT,
@@ -394,14 +508,17 @@ def calculate_and_store_ratio(DB_PATH, ticker, ratio_key, period_type, aggr_type
 
     insert_query = """
         INSERT OR REPLACE INTO financial_ratios (
-            company_ticker, period_end, period_type, aggr_type,
+            company_ticker, period_start, period_end, period_type, aggr_type,
             ratio_name_eng, ratio_name_ro, measure_unit, value, category, formula, calculated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     for r in results:
         cursor.execute(insert_query, (
-            r["company_ticker"], r["period_end"].strftime("%d/%m/%Y") if isinstance(r["period_end"], (datetime, pd.Timestamp)) else r["period_end"], r["period_type"], r["aggr_type"],
+            r["company_ticker"], 
+            r["period_start"] if isinstance(r["period_start"], str) else r["period_start"].strftime("%Y-%m-%d"),  
+            r["period_end"] if isinstance(r["period_end"], str) else r["period_end"].strftime("%Y-%m-%d"), 
+            r["period_type"], r["aggr_type"],   
             r["ratio_name_eng"], r["ratio_name_ro"], r["measure_unit"], r["value"], r["category"],
             r["formula"], r["calculated_at"]
         ))

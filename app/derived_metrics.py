@@ -1,5 +1,5 @@
 # derived_metrics.py
-# ------------------
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
 # This module defines and calculates derived financial metrics that are not directly reported in the financial statements,
 # but are essential for valuation and fundamental analysis (e.g., EBIT, EBITDA, Net Debt, FCFF, etc).
 
@@ -98,6 +98,7 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
     query = f"""
         SELECT 
             f.company_ticker,
+            f.period_start,
             f.period_end,
             f.period_type,
             f.aggr_type,
@@ -116,6 +117,7 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
     query_notes = f"""
     SELECT 
         n.company_ticker,
+        n.period_start,
         n.period_end,
         n.period_type,
         n.aggr_type,
@@ -134,12 +136,13 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
 
     df_notes = pd.read_sql_query(query_notes, conn, params=params_notes)
     #df_notes["metric"] = df_notes["note_element"]  # unify column names
-    df_notes = df_notes[["company_ticker", "period_end", "period_type", "aggr_type", "metric", "value"]]
+    df_notes = df_notes[["company_ticker", "period_start", "period_end", "period_type", "aggr_type", "metric", "value"]]
 
     print(df_notes)
     query_derived = f"""
         SELECT 
             company_ticker,
+            period_start,
             period_end,
             period_type,
             aggr_type,
@@ -170,7 +173,7 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
 
     # Pivot the data for easy access
     df_pivot = df.pivot_table(
-        index=["company_ticker", "period_end", "period_type", "aggr_type"],
+        index=["company_ticker", "period_start", "period_end", "period_type", "aggr_type"],
         columns="metric",
         values="value"
     ).reset_index()
@@ -195,6 +198,7 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
 
         results.append({
             "company_ticker": row["company_ticker"],
+            "period_start": row["period_start"],
             "period_end": row["period_end"],
             "period_type": row["period_type"],
             "aggr_type": row["aggr_type"],
@@ -211,7 +215,8 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS derived_metrics (
             company_ticker TEXT,
-            period_end TEXT,
+            period_start DATE
+            period_end DATE,
             period_type TEXT,
             aggr_type TEXT,
             metric_name_eng TEXT,
@@ -225,14 +230,14 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
 
     insert_query = """
         INSERT OR REPLACE INTO derived_metrics (
-            company_ticker, period_end, period_type, aggr_type,
+            company_ticker, period_start, period_end, period_type, aggr_type,
             metric_name_eng, metric_name_ro, value, formula, calculated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
     for r in results:
         cursor.execute(insert_query, (
-            r["company_ticker"], r["period_end"], r["period_type"], r["aggr_type"],
+            r["company_ticker"], r["period_start"], r["period_end"], r["period_type"], r["aggr_type"],
             r["metric_name_eng"], r["metric_name_ro"], r["value"], r["formula"], r["calculated_at"]
         ))
 
@@ -248,7 +253,35 @@ def calculate_and_store_derived_metric(DB_PATH, ticker, metric_key, period_type,
 tickers = ["AQ"]  # Replace with dynamic ticker list if needed
 
 def run_all_derived_calculations(DB_PATH, tickers):
-    metric_keys = list(DERIVED_METRIC_DEFINITIONS.keys())
+    # Create table once up front
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS derived_metrics (
+            company_ticker TEXT,
+            period_start DATE,
+            period_end DATE,
+            period_type TEXT,
+            aggr_type TEXT,
+            metric_name_eng TEXT,
+            metric_name_ro TEXT,
+            value REAL,
+            formula TEXT,
+            calculated_at TEXT,
+            PRIMARY KEY (company_ticker, period_end, period_type, aggr_type, metric_name_eng)
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+    # Now run metrics in proper order
+    metric_keys = [
+        "EBIT",
+        "EBITDA",
+        "Interest-bearing debt",  # dependency
+        "Net debt"                # depends on Interest-bearing debt
+    ]
+
     period_types = ["annual", "quarter"]
     aggr_types = ["cml", "qtl"]
 
@@ -258,5 +291,6 @@ def run_all_derived_calculations(DB_PATH, tickers):
                 for aggr_type in aggr_types:
                     print(f"\n🔄 {ticker} | {metric} | {period_type} | {aggr_type}")
                     calculate_and_store_derived_metric(DB_PATH, ticker, metric, period_type, aggr_type)
+
 
 run_all_derived_calculations(DB_PATH, ["AQ"])

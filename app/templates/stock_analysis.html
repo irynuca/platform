@@ -6,14 +6,11 @@
     <title>{{ ticker }} - Analiza Fundamentală</title>
     <!-- Bootstrap 5.3 CSS from CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <!-- Your Custom Styles -->
 
     <!-- Line Awesome Icons -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/line-awesome.min.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-
-    
     <!-- Theme & Vendor CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='icons/font-awesome/css/all.min.css') }}">
@@ -44,10 +41,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <!-- DataLabels plugin for Chart.js v4 -->
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-
-
-
-
 </head>
 
 <body>
@@ -207,6 +200,11 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link" id="fundamentals-tab" data-bs-toggle="tab" data-bs-target="#fundamentale" role="tab">
+                    <i class="la la-calculator me-2"></i> Fundamentale
+                </a>                
+            </li>
+            <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" data-bs-target="#financials">
                     <i class="lar la-chart-bar me-2"></i> Evolutie financiara
                 </a>
@@ -321,6 +319,121 @@
                 </div>
             </div>
         </div>
+        <!------------------------------ Tab Fundamentale------------------------------------------------------------------------------------------------------------>
+        <div id="fundamentale" role="tabpanel" class="tab-pane fade" >
+            <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 50px;">
+                <div class="card-body d-flex align-items-center" style="height: 50px;">
+                    <h5 class="card-title mb-0">
+                        Cele mai recente rezultate financiare trimestriale:&nbsp;
+                        <a href="javascript:void(0)" class="badge badge-rounded badge-outline-secondary badge-md">{{ latest_quarter }}</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="row">
+                <!-- Card 1 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card text-white" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                        <div class="card-header" style="height: 50px;">
+                            <h5 class="card-title mb-0">Venituri</h5>
+                        </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                              <canvas id="revenueQTLandChange" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                            </div>
+                        </div>
+                        <div class="px-3 pt-2 pb-3 text-white" style="background-color: rgba(94, 62, 208, 0.15); border-top: 1px solid rgba(255,255,255,0.2);">
+                            <small><strong>Comentariu:</strong> {{ comment_revenue_growth or "Nu există comentarii disponibile pentru acest trimestru." }}</small>
+                        </div>
+                    </div>
+                </div>
+           
+                <!-- Card 2 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                        <div class="card-header" style="height: 50px;">
+                            <h5 class="card-title text-white">Profit operational</h5>
+                        </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                              <canvas id="OperatingProfitandMarginCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                              <div id="donutCenterLabel" class="position-absolute top-50 start-50 translate-middle text-white text-center fw-semibold" style="pointer-events: none;"></div>
+                            </div>
+                        </div>
+                        <div class="px-3 pt-2 pb-3 text-white" style="background-color: rgba(94, 62, 208, 0.15); border-top: 1px solid rgba(255,255,255,0.2);">
+                            <small><strong>Comentariu:</strong> {{comment_operating_profit or "Nu există comentarii disponibile pentru acest trimestru."}}</small>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                        <div class="card-header" style="height: 50px;">
+                            <h5 class="card-title text-white">Profit net</h5>
+                        </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                              <canvas id="NetProfitandMarginCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                            </div>
+                        </div>
+                        <div class="px-3 pt-2 pb-3 text-white" style="background-color: rgba(94, 62, 208, 0.15); border-top: 1px solid rgba(255,255,255,0.2);">
+                            <small><strong>Comentariu:</strong> {{ comment_net_profit or "Nu există comentarii disponibile pentru acest trimestru." }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 50px;">
+                <div class="card-body d-flex align-items-center" style="height: 50px;">
+                    <h5 class="card-title mb-0">
+                        Cele mai recente rezultate financiare anuale:&nbsp;
+                        <a href="javascript:void(0)" class="badge badge-rounded badge-outline-secondary badge-md">{{ latest_quarter }}</a>
+                    </h5>
+                </div>
+            </div>
+            <div class="row">
+                <!-- Card 1 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card text-white" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                        <div class="card-header" style="height: 50px;">
+                            <h5 class="card-title mb-0">Venituri</h5>
+                        </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                            <canvas id="revenueAnnualandChange" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        
+                <!-- Card 2 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                        <div class="card-header" style="height: 50px;">
+                            <h5 class="card-title text-white">Profit operational</h5>
+                        </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                            <canvas id="OperatingProfitandMarginCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                            <div id="donutCenterLabel" class="position-absolute top-50 start-50 translate-middle text-white text-center fw-semibold" style="pointer-events: none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="col-md-4 mb-4">
+                    <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                        <div class="card-header" style="height: 50px;">
+                            <h5 class="card-title text-white">Profit net</h5>
+                        </div>
+                        <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                            <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                            <canvas id="NetProfitandMarginCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         <!------------------------------------------------Tab 2 Evolutie financiara----------------------------------------------------------------------------------->
         <div id="financials" class="tab-pane fade" role="tabpanel">
             <!-- Sub-tabs for Financial Statements -->
@@ -547,66 +660,66 @@
 <script src="https://unpkg.com/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
 
 <script>
-    function loadStockChart(period = '1y') {
-        const ticker = "{{ ticker }}";
-    
-        fetch(`/historical_data/${ticker}/${period}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    document.getElementById("lightweight-stock-chart").innerHTML = "<p>Date indisponibile.</p>";
-                    return;
-                }
+function loadStockChart(period = '1y') {
+    const ticker = "{{ ticker }}";
 
-                // Clear chart before redrawing
-                document.getElementById("lightweight-stock-chart").innerHTML = "";
+    fetch(`/historical_data/${ticker}/${period}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById("lightweight-stock-chart").innerHTML = "<p>Date indisponibile.</p>";
+                return;
+            }
 
-                const chart = LightweightCharts.createChart(document.getElementById('lightweight-stock-chart'), {
-                    width: document.getElementById('lightweight-stock-chart').clientWidth,
-                    height: 300,
-                    layout: {
-                        background: { color: 'transparent' },
-                        textColor: '#ffffff',
-                    },
-                    grid: {
-                        vertLines: { visible: false },
-                        horzLines: { color: 'rgba(255,255,255,0.1)' },
-                    },
-                    timeScale: {
-                        timeVisible: true,
-                        borderColor: '#ffffff33',
-                    },
-                    rightPriceScale: {
-                        borderColor: '#ffffff33',
-                    },
-                });
-    
-                const areaSeries = chart.addAreaSeries({
-                    topColor: 'rgba(79, 209, 197, 0.5)',
-                    bottomColor: 'rgba(79, 209, 197, 0)',
-                    lineColor: '#4FD1C5',
-                    lineWidth: 2,
-                });
-    
-                const chartData = data.dates.map((date, i) => ({
-                    time: date.split('T')[0],
-                    value: parseFloat(data.prices[i])
-                }));
-                
-                areaSeries.setData(chartData);
-                chart.timeScale().fitContent();
-    
-                window.addEventListener('resize', () => {
-                    chart.resize(document.getElementById('lightweight-stock-chart').clientWidth, 300);
-                });
-            })
-            .catch(err => console.error("❌ Error loading chart", err));
-    }
+            // Clear chart before redrawing
+            document.getElementById("lightweight-stock-chart").innerHTML = "";
 
-    // ✅ Load default chart on page load
-    document.addEventListener("DOMContentLoaded", function () {
-        loadStockChart('1y');
-    });
+            const chart = LightweightCharts.createChart(document.getElementById('lightweight-stock-chart'), {
+                width: document.getElementById('lightweight-stock-chart').clientWidth,
+                height: 300,
+                layout: {
+                    background: { color: 'transparent' },
+                    textColor: '#ffffff',
+                },
+                grid: {
+                    vertLines: { visible: false },
+                    horzLines: { color: 'rgba(255,255,255,0.1)' },
+                },
+                timeScale: {
+                    timeVisible: true,
+                    borderColor: '#ffffff33',
+                },
+                rightPriceScale: {
+                    borderColor: '#ffffff33',
+                },
+            });
+
+            const areaSeries = chart.addAreaSeries({
+                topColor: 'rgba(79, 209, 197, 0.5)',
+                bottomColor: 'rgba(79, 209, 197, 0)',
+                lineColor: '#4FD1C5',
+                lineWidth: 2,
+            });
+
+            const chartData = data.dates.map((date, i) => ({
+                time: date.split('T')[0],
+                value: parseFloat(data.prices[i])
+            }));
+            
+            areaSeries.setData(chartData);
+            chart.timeScale().fitContent();
+
+            window.addEventListener('resize', () => {
+                chart.resize(document.getElementById('lightweight-stock-chart').clientWidth, 300);
+            });
+        })
+        .catch(err => console.error("❌ Error loading chart", err));
+}
+
+// ✅ Load default chart on page load
+document.addEventListener("DOMContentLoaded", function () {
+    loadStockChart('1y');   
+});
 
 // --- Financials Data Logic ---
 function updateFinancialTable(tabId, data) {
@@ -1069,7 +1182,6 @@ function loadSegmentRevenueChart() {
         });
 }
 
-
 function loadProfitabilityChart() {
     fetch('/profit_and_margin_data/{{ ticker }}')
         .then(response => {
@@ -1228,6 +1340,661 @@ function loadProfitabilityChart() {
         .catch(err => {console.error("❌ Chart load failed:", err);});
 }
 
+function loadRevenueGrowthChart() {
+    fetch('/revenue_qtl_and_change_data/{{ ticker }}')
+        .then(response => {
+            if (!response.ok) throw new Error("Backend returned an error");
+            return response.json();
+        })
+        .then(data => {
+            if (!data || !data.periods?.length || !data.revenues?.length || !data.change_rate?.length) {
+                console.warn("🚫 Incomplete data received");
+                return;
+            }
+
+            const canvas = document.getElementById("revenueQTLandChange");
+            if (!canvas) {
+                console.error("❌ Canvas element not found");
+                return;
+            }
+
+            const ctx = canvas.getContext("2d");
+            const labels = data.periods;
+            const revenues = data.revenues.map(v => v / 1_000_000);  // → mn RON
+            const growthRates = data.change_rate;
+            const lastIndex = labels.length - 1;
+            const yearAgoIndex = labels.findIndex(p => p === labels[lastIndex].replace(/(\d{2})$/, (match) => (parseInt(match) - 1).toString().padStart(2, '0')));
+
+            const barColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.teal.active : chartTheme.teal.base
+            );
+
+            const barHoverColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.teal.hover : chartTheme.teal.hover
+            );
+            const revMax = Math.max(...revenues);
+            const growthMax = Math.max(...growthRates);
+
+            function calcRevAxisScale(rawMax) {
+                const niceMax = Math.ceil(rawMax / 100) * 100;
+                const step = Math.ceil(niceMax / 4);
+                return { roundedMax: step * 4, step };
+            }
+
+            function calcGrowthAxisScale(rawMax) {
+                const step = rawMax < 20 ? 2 : rawMax < 50 ? 5 : 10;
+                const niceMax = Math.ceil(rawMax / step) * step;
+                const roundedMax = Math.ceil(niceMax / step) * step; // re-round nicely
+                return { roundedMax, step };
+            }
+
+            const { roundedMax: yMax, step: yStep } = calcRevAxisScale(revMax);
+            const { roundedMax: y1Max, step: y1Step } = calcGrowthAxisScale(growthMax);
+
+            if (window.revenueGrowthChartInstance) {
+                window.revenueGrowthChartInstance.destroy();
+            }
+
+            Chart.defaults.font.family = 'Poppins';
+
+            window.revenueGrowthChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Venituri (mnRON)',
+                            data: revenues,
+                            backgroundColor: barColors,
+                            hoverBackgroundColor: barHoverColors,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 2,
+                            z: 1
+                        },
+                        {
+                            type: 'line',
+                            label: 'Creștere venit y/y',
+                            data: growthRates,
+                            borderColor: chartTheme.orange.base,
+                            backgroundColor: chartTheme.orange.base,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            order: 1,
+                            z: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: yMax,
+                            title: { display: false, text: 'Venituri (mnRON)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: yStep,
+                                callback: v => `${v.toFixed(0)}`
+                            },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            max: y1Max,
+                            title: { display: false, text: 'Creștere venit (%)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: y1Step,
+                                callback: v => `${v.toFixed(0)}%`
+                            },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        }
+                    },
+                    plugins: {
+                        datalabels: { display: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'center',
+                            labels: {
+                                color: '#fff',
+                                font: { size: 12, family: 'Poppins' },
+                                padding: 10,
+                                boxWidth: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(240,240,240,0.2)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderWidth: 0,
+                            titleFont: { weight: 'bold' },
+                            bodyFont: { weight: 'bold' },
+                            callbacks: {
+                                label: function (ctx) {
+                                    if (ctx.dataset.yAxisID === 'y') {
+                                        return `Venituri: ${ctx.raw.toFixed(1)} mnRON`;
+                                    } else {
+                                        return `Creștere y/y: ${ctx.raw.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => {
+            console.error("❌ Eroare la încărcarea graficului de venituri:", err);
+        });
+}
+
+function loadOperatingProfitandMarginChart() {
+    fetch('/operating_profit_qtl_and_margin_data/{{ ticker }}')
+        .then(response => {
+            if (!response.ok) throw new Error("Backend returned an error");
+            return response.json();
+        })
+        .then(data => {
+            if (!data || !data.periods?.length || !data.operating_profit?.length || !data.operating_margin?.length) {
+                console.warn("🚫 Incomplete data received");
+                return;
+            }
+
+            const canvas = document.getElementById("OperatingProfitandMarginCanvas");
+            if (!canvas) {
+                console.error("❌ Canvas element not found");
+                return;
+            }
+
+            const ctx = canvas.getContext("2d");
+            const labels = data.periods;
+            const operating_profit = data.operating_profit.map(v => v / 1_000_000);  // → mn RON
+            const operating_margin = data.operating_margin;
+            // 🔍 Highlight the latest quarter and the same quarter last year
+            const lastIndex = labels.length - 1;
+            const yearAgoIndex = labels.findIndex(p => p === labels[lastIndex].replace(/(\d{2})$/, (match) => (parseInt(match) - 1).toString().padStart(2, '0')));
+
+            const barColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.secondary.active : chartTheme.secondary.base
+            );
+
+            const barHoverColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.secondary.hover : chartTheme.secondary.hover
+            );
+
+
+            const revMax = Math.max(...operating_profit);
+            const growthMax = Math.max(...operating_margin);
+
+            function calcRevAxisScale(rawMax) {
+                const niceMax = Math.ceil(rawMax / 100) * 100;
+                const step = Math.ceil(niceMax / 4);
+                return { roundedMax: step * 4, step };
+            }
+
+            function calcGrowthAxisScale(rawMax) {
+                const step = rawMax < 20 ? 2 : rawMax < 50 ? 5 : 10;
+                const niceMax = Math.ceil(rawMax / step) * step;
+                const roundedMax = Math.ceil(niceMax / step) * step; // re-round nicely
+                return { roundedMax, step };
+            }
+
+            const { roundedMax: yMax, step: yStep } = calcRevAxisScale(revMax);
+            const { roundedMax: y1Max, step: y1Step } = calcGrowthAxisScale(growthMax);
+
+            if (window.OperatingProfitandMarginChartInstance) {
+                window.OperatingProfitandMarginChartInstance.destroy();
+            }
+
+            Chart.defaults.font.family = 'Poppins';
+
+            window.OperatingProfitandMarginChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Profit operational (mnRON)',
+                            data: operating_profit,
+                            backgroundColor: barColors,
+                            hoverBackgroundColor: barHoverColors,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 2,
+                            z: 1
+                        },
+                        {
+                            type: 'line',
+                            label: 'Marja operationala',
+                            data: operating_margin,
+                            borderColor: '#A9DDD6',
+                            backgroundColor: '#A9DDD6',
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            order: 1,
+                            z: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: yMax,
+                            title: { display: false, text: 'Profit operational (mnRON)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: yStep,
+                                callback: v => `${v.toFixed(0)}`
+                            },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            max: y1Max,
+                            title: { display: false, text: 'Marja operationala (%)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: y1Step,
+                                callback: v => `${v.toFixed(0)}%`
+                            },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        }
+                    },
+                    plugins: {
+                        datalabels: { display: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'center',
+                            labels: {
+                                color: '#fff',
+                                font: { size: 12, family: 'Poppins' },
+                                padding: 10,
+                                boxWidth: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(240,240,240,0.2)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderWidth: 0,
+                            titleFont: { weight: 'bold' },
+                            bodyFont: { weight: 'bold' },
+                            callbacks: {
+                                label: function (ctx) {
+                                    if (ctx.dataset.yAxisID === 'y') {
+                                        return `Profit operational: ${ctx.raw.toFixed(1)} mnRON`;
+                                    } else {
+                                        return `Marja operationala: ${ctx.raw.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => {
+            console.error("❌ Eroare la încărcarea graficului de profit operational:", err);
+        });
+}
+
+function loadNetProfitandMarginChart() {
+    fetch('/net_profit_qtl_and_margin_data/{{ ticker }}')
+        .then(response => {
+            if (!response.ok) throw new Error("Backend returned an error");
+            return response.json();
+        })
+        .then(data => {
+            if (!data || !data.periods?.length || !data.net_profit?.length || !data.net_margin?.length) {
+                console.warn("🚫 Incomplete data received");
+                return;
+            }
+
+            const canvas = document.getElementById("NetProfitandMarginCanvas");
+            if (!canvas) {
+                console.error("❌ Canvas element not found");
+                return;
+            }
+
+            const ctx = canvas.getContext("2d");
+            const labels = data.periods;
+            const net_profit = data.net_profit.map(v => v / 1_000_000);  // → mn RON
+            const net_margin = data.net_margin;
+            const lastIndex = labels.length - 1;
+            const yearAgoIndex = labels.findIndex(p => p === labels[lastIndex].replace(/(\d{2})$/, (match) => (parseInt(match) - 1).toString().padStart(2, '0')));
+
+            const barColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.primary.active : chartTheme.primary.base
+            );
+
+            const barHoverColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.primary.hover : chartTheme.primary.hover
+            );
+            const revMax = Math.max(...net_profit); 
+            const growthMax = Math.max(...net_margin);
+
+            function calcRevAxisScale(rawMax) {
+                const niceMax = Math.ceil(rawMax / 100) * 100;
+                const step = Math.ceil(niceMax / 4);
+                return { roundedMax: step * 4, step };
+            }
+
+            function calcGrowthAxisScale(rawMax) {
+                const step = rawMax < 20 ? 2 : rawMax < 50 ? 5 : 10;
+                const niceMax = Math.ceil(rawMax / step) * step;
+                const roundedMax = Math.ceil(niceMax / step) * step; // re-round nicely
+                return { roundedMax, step };
+            }
+
+            const { roundedMax: yMax, step: yStep } = calcRevAxisScale(revMax);
+            const { roundedMax: y1Max, step: y1Step } = calcGrowthAxisScale(growthMax);
+
+            if (window.NetProfitandMarginChartInstance) {
+                window.NetProfitandMarginChartInstance.destroy();
+            }
+
+            Chart.defaults.font.family = 'Poppins';
+
+            window.NetProfitandMarginChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Profit net a.m. (mnRON)',
+                            data: net_profit,
+                            backgroundColor: barColors,
+                            hoverBackgroundColor: barHoverColors,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 2,
+                            z: 1
+                        },
+                        {
+                            type: 'line',
+                            label: 'Marja neta',
+                            data: net_margin,
+                            borderColor: chartTheme.yellow.base,
+                            backgroundColor: chartTheme.yellow.base,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            order: 1,
+                            z: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: yMax,
+                            title: { display: false, text: 'Profit net a.m. (mnRON)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: yStep,
+                                callback: v => `${v.toFixed(0)}`
+                            },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            max: y1Max,
+                            title: { display: false, text: 'Marja neta (%)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: y1Step,
+                                callback: v => `${v.toFixed(0)}%`
+                            },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        }
+                    },
+                    plugins: {
+                        datalabels: { display: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'center',
+                            labels: {
+                                color: '#fff',
+                                font: { size: 12, family: 'Poppins' },
+                                padding: 10,
+                                boxWidth: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(240,240,240,0.2)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderWidth: 0,
+                            titleFont: { weight: 'bold' },
+                            bodyFont: { weight: 'bold' },
+                            callbacks: {
+                                label: function (ctx) {
+                                    if (ctx.dataset.yAxisID === 'y') {
+                                        return `Profit net a.m.: ${ctx.raw.toFixed(1)} mnRON`;
+                                    } else {
+                                        return `Marja neta: ${ctx.raw.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => {
+            console.error("❌ Eroare la încărcarea graficului de profit net:", err);
+        });
+}
+
+function loadAnnualRevenueGrowthChart() {
+    fetch('/revenue_annual_and_change_data/{{ ticker }}')
+        .then(response => {
+            if (!response.ok) throw new Error("Backend returned an error");
+            return response.json();
+        })
+        .then(data => {
+            if (!data || !data.periods?.length || !data.revenues?.length || !data.change_rate?.length) {
+                console.warn("🚫 Incomplete data received");
+                return;
+            }
+
+            const canvas = document.getElementById("revenueAnnualandChange");
+            if (!canvas) {
+                console.error("❌ Canvas element not found");
+                return;
+            }
+
+            const ctx = canvas.getContext("2d");
+            const labels = data.periods;
+            const revenues = data.revenues.map(v => v / 1_000_000);  // → mn RON
+            const growthRates = data.change_rate;
+            const lastIndex = labels.length - 1;
+            const yearAgoIndex = labels.findIndex(p => p === labels[lastIndex].replace(/(\d{2})$/, (match) => (parseInt(match) - 1).toString().padStart(2, '0')));
+
+            const barColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.teal.active : chartTheme.teal.base
+            );
+
+            const barHoverColors = labels.map((_, i) =>
+                i === lastIndex || i === yearAgoIndex ? chartTheme.teal.hover : chartTheme.teal.hover
+            );
+            const revMax = Math.max(...revenues);
+            const growthMax = Math.max(...growthRates);
+
+            function calcRevAxisScale(rawMax) {
+                const niceMax = Math.ceil(rawMax / 100) * 100;
+                const step = Math.ceil(niceMax / 4);
+                return { roundedMax: step * 4, step };
+            }
+
+            function calcGrowthAxisScale(rawMax) {
+                const step = rawMax < 20 ? 2 : rawMax < 50 ? 5 : 10;
+                const niceMax = Math.ceil(rawMax / step) * step;
+                const roundedMax = Math.ceil(niceMax / step) * step; // re-round nicely
+                return { roundedMax, step };
+            }
+
+            const { roundedMax: yMax, step: yStep } = calcRevAxisScale(revMax);
+            const { roundedMax: y1Max, step: y1Step } = calcGrowthAxisScale(growthMax);
+
+            if (window.revenueGrowthChartInstance) {
+                window.revenueGrowthChartInstance.destroy();
+            }
+
+            Chart.defaults.font.family = 'Poppins';
+
+            window.revenueGrowthChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Venituri (mnRON)',
+                            data: revenues,
+                            backgroundColor: barColors,
+                            hoverBackgroundColor: barHoverColors,
+                            borderRadius: 4,
+                            yAxisID: 'y',
+                            order: 2,
+                            z: 1
+                        },
+                        {
+                            type: 'line',
+                            label: 'Creștere venit y/y',
+                            data: growthRates,
+                            borderColor: chartTheme.orange.base,
+                            backgroundColor: chartTheme.orange.base,
+                            fill: false,
+                            tension: 0.3,
+                            yAxisID: 'y1',
+                            order: 1,
+                            z: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: yMax,
+                            title: { display: false, text: 'Venituri (mnRON)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: yStep,
+                                callback: v => `${v.toFixed(0)}`
+                            },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            max: y1Max,
+                            title: { display: false, text: 'Creștere venit (%)' },
+                            ticks: {
+                                color: '#fff',
+                                stepSize: y1Step,
+                                callback: v => `${v.toFixed(0)}%`
+                            },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        },
+                        x: {
+                            ticks: { color: '#fff' },
+                            grid: { drawOnChartArea: false, drawTicks: false },
+                            border: { display: true, color: 'rgba(255,255,255,0.3)', width: 1, z: 1 }
+                        }
+                    },
+                    plugins: {
+                        datalabels: { display: false },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            align: 'center',
+                            labels: {
+                                color: '#fff',
+                                font: { size: 12, family: 'Poppins' },
+                                padding: 10,
+                                boxWidth: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(240,240,240,0.2)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderWidth: 0,
+                            titleFont: { weight: 'bold' },
+                            bodyFont: { weight: 'bold' },
+                            callbacks: {
+                                label: function (ctx) {
+                                    if (ctx.dataset.yAxisID === 'y') {
+                                        return `Venituri: ${ctx.raw.toFixed(1)} mnRON`;
+                                    } else {
+                                        return `Creștere y/y: ${ctx.raw.toFixed(2)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(err => {
+            console.error("❌ Eroare la încărcarea graficului de venituri:", err);
+        });
+}
+
 
 // --- Setup Event Listeners ---
 document.addEventListener("DOMContentLoaded", function () {
@@ -1242,6 +2009,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Load profitability chart
     loadProfitabilityChart();
+
+    loadRevenueGrowthChart();
+
+    loadOperatingProfitandMarginChart();
+
+    loadNetProfitandMarginChart();
+
+    loadAnnualRevenueGrowthChart();
+
+    
 
     // Financials sub-tab buttons (if you still want extra button functionality)
     document.getElementById("btn-pl-annual").addEventListener("click", () => {
@@ -1284,13 +2061,14 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
         tab.addEventListener('shown.bs.tab', function (e) {
             const targetTabId = e.target.getAttribute("data-bs-target");
+
             if (targetTabId === "#financials") {
-                // When Financials tab is shown, the default sub-tab is set via the Bootstrap markup (active on PL)
-                // You can optionally trigger a load here if needed:
                 loadFinancialData("pl_statement", "annual", "cml");
-            }
-            if (targetTabId === "#indicators") {
+            } else if (targetTabId === "#indicators") {
                 loadRatiosData("annual", "cml");
+            } else if (targetTabId === "#fundamentals") {
+                console.log("Fundamentale tab opened.");
+                // Optionally load chart or call a function
             }
         });
     });
