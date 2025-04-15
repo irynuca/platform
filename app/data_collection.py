@@ -50,6 +50,7 @@ def init_db(db_path):
     CREATE TABLE IF NOT EXISTS notes (
     note_id INTEGER PRIMARY KEY AUTOINCREMENT,
     company_ticker TEXT NOT NULL,
+    period_start DATE NOT NULL,
     period_end DATE NOT NULL,
     period_type TEXT NOT NULL,
     aggr_type TEXT NOT NULL,

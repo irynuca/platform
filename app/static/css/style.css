@@ -26736,3 +26736,62 @@ p.tight {
   cursor: pointer;          /* Show pointer cursor */
 }
 
+/* Styles for tables with frozen first column */
+
+/* Container for the table with horizontal scroll */
+.table-responsive-container {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: visible;
+  margin-bottom: 1rem;
+}
+
+/* Style for tables with frozen first column */
+.table-frozen-column {
+  position: relative;
+  margin-bottom: 0;
+}
+
+/* Style for the frozen first column */
+.table-frozen-column th:first-child,
+.table-frozen-column td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background-color: #2a2a2a; /* Dark background to match your theme */
+  border-right: 2px solid #4e4e4e; /* Border to separate frozen column */
+}
+
+/* Add shadow effect to indicate scrollable content */
+.table-frozen-column th:first-child::after,
+.table-frozen-column td:first-child::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+
+/* Ensure text doesn't wrap in the frozen column */
+.table-frozen-column th:first-child,
+.table-frozen-column td:first-child {
+  white-space: nowrap;
+  min-width: 200px; /* Adjust based on your content */
+}
+
+/* Ensure other columns have consistent width */
+.table-frozen-column th:not(:first-child),
+.table-frozen-column td:not(:first-child) {
+  min-width: 120px; /* Adjust based on your data */
+}
+
+/* Ensure the header has the correct background color */
+.table-frozen-column thead th:first-child {
+  background-color: #212529; /* Match Bootstrap's dark table header */
+  z-index: 2; /* Higher z-index to stay on top of body cells */
+}
+
