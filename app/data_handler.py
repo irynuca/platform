@@ -13,6 +13,7 @@ from babel.dates import format_date
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Path to app/ directory
 DATA_DIR = os.path.join(BASE_DIR, "data")  # Path to data/
+desc_dir = os.path.join(DATA_DIR, "business_descriptions")
 COMPANY_INFO_FILE = os.path.join(DATA_DIR, "company_info.csv")  # Full path to CSV
 DB_PATH = os.path.join(DATA_DIR, "financials.db")  # Full path to database
 
@@ -188,12 +189,12 @@ def get_stock_overview(ticker):
 
     # Get business description from local file
     txt_filename = f"{ticker.upper()}_about_ro.txt"
-    txt_path = os.path.join("C:/Users/irina/Project Element/Data source", ticker.upper(), txt_filename)
+    txt_path = os.path.join(desc_dir, txt_filename)
     try:
         with open(txt_path, "r", encoding="utf-8") as f:
             business_description = f.read().strip()
     except FileNotFoundError:
-        business_description = "Descrierea companiei nu este disponibilă (fișierul local lipsește)."
+        business_description = "Descrierea companiei nu este disponibilă."
 
     stock_data = {
     "company_name": company_details["company_name"],
