@@ -323,10 +323,10 @@ def get_financial_statement(ticker, statement_name, period_type, aggr_type):
         row_data = row.drop(labels=["metric_name"]).dropna()
 
         # Build an ordered dictionary of period → value
-        sorted_periods = sorted(row_data.index, key=lambda x: datetime.strptime(x,"%d-%m-%Y"))
+        sorted_periods = sorted(row_data.index, key=lambda x: datetime.strptime(x, "%Y-%m-%d"))
         period_values = OrderedDict()
         for period_col in sorted_periods:
-            period_values[period_col] = str(row_data[period_col])  # Convert to string if needed
+            period_values[period_col] = float(row_data[period_col]) if pd.notnull(row_data[period_col]) else None
 
         final_list.append({
             "metric_id": metric_id,

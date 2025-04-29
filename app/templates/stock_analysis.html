@@ -473,7 +473,13 @@
                                         <tr>
                                             <td class="text-start">{{ row["metric_name"] }}</td>
                                             {% for p in all_periods %}
-                                                <td class="text-end">{{ row["values"][p] if p in row["values"] else "-" }}</td>
+                                            <td class="text-end">
+                                                {% if p in row["values"] %}
+                                                    {{ row["values"][p]|format_number }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
                                             {% endfor %}
                                         </tr>
                                         {% endfor %}
@@ -533,7 +539,13 @@
                                         <tr>
                                             <td class="text-start">{{ row["metric_name"] }}</td>
                                             {% for p in all_periods %}
-                                                <td class="text-end">{{ row["values"][p] if p in row["values"] else "-" }}</td>
+                                            <td class="text-end">
+                                                {% if p in row["values"] %}
+                                                    {{ row["values"][p]|format_number }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
                                             {% endfor %}
                                         </tr>
                                         {% endfor %}
@@ -595,7 +607,13 @@
                                         <tr>
                                             <td class="text-start">{{ row["metric_name"] }}</td>
                                             {% for p in all_periods %}
-                                                <td class="text-end">{{ row["values"][p] if p in row["values"] else "-" }}</td>
+                                            <td class="text-end">
+                                                {% if p in row["values"] %}
+                                                    {{ row["values"][p]|format_number }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
                                             {% endfor %}
                                         </tr>
                                         {% endfor %}
@@ -719,8 +737,14 @@ function updateFinancialTable(tabId, data) {
     data.forEach(row => {
         tbodyHTML += `<tr><td class="text-start">${row.metric_name}</td>`;
         sortedPeriods.forEach(period => {
-            tbodyHTML += `<td class="text-end">${row.values[period] || "-"}</td>`;
+            const value = row.values[period];
+            if (value !== undefined && value !== null && value !== "") {
+                tbodyHTML += `<td class="text-end">${Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 })}</td>`;
+            } else {
+                tbodyHTML += `<td class="text-end">-</td>`;
+            }
         });
+
         tbodyHTML += `</tr>`;
     });
     tbodyHTML += "</tbody>";
