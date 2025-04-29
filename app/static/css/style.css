@@ -10010,11 +10010,12 @@ svg.pulse-svg {
 .dlabnav {
   width: 18.5rem;
   padding-bottom: 0;
-  height: calc(100% - 4.3rem);
-  position: absolute;
+  height: 100vh; /* full screeen height */
+  position: fixed;
   top: 5.5rem;
   padding-top: 0;
   z-index: 6;
+  overflow-y: auto; /* adds scrollbar if needed inside sidebar */
   transition: all .2s ease;
   box-shadow: 0rem 0.9375rem 1.875rem 0rem rgba(0, 0, 0, 0.02);
   background: var(--sidebar-bg); }
