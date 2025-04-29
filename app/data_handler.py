@@ -518,10 +518,10 @@ def get_segment_revenue_notes(ticker):
     """
     cursor.execute(all_periods_query, (ticker,))
     periods = cursor.fetchall()
-
+    print(periods)
     if not periods:
         conn.close()
-        return []
+        return {"period":"N/A", "data": []}
 
     # Step 2: Parse to datetime and find the latest
     try:
@@ -532,7 +532,8 @@ def get_segment_revenue_notes(ticker):
     except Exception as e:
         print(f"❌ Date parsing error: {e}")
         conn.close()
-        return []
+        return {"period": "N/A", "data": []}
+
 
     # Step 3: Now fetch note elements for that latest period
     notes_query = """
