@@ -1,0 +1,98 @@
+<div class="tab-pane fade show active" id="summary" role="tabpanel">
+   <div class="row">
+        <!-- Left Column: Despre Companie -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" id="card-title-2" style="--bs-card-bg: rgba(94, 62, 208, 0.3);">
+                <div class="card-header border-0 pb-0">
+                    <h5 class="card-title text-white">Despre companie</h5>
+                </div>
+                <div class="card-body">
+                    {% for paragraph in business_description.split('\n') %}
+                    <p class="tight">{{ paragraph.strip() }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    
+        <!-- Right Column: Evoluție preț acțiune -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100" id="card-title-2" style="--bs-card-bg: rgba(94, 62, 208, 0.3);">
+                <div class="card-header border-0 pb-0">
+                    <h5 class="card-title text-white">Evoluție preț acțiune</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-end mb-3">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button class="btn btn-outline-light stock-period-btn" data-period="1d">1 zi</button>
+                            <button class="btn btn-outline-light stock-period-btn" data-period="1mo">1 luna</button>
+                            <button class="btn btn-outline-light stock-period-btn" data-period="1y">1 an</button>
+                            <button class="btn btn-outline-light stock-period-btn" data-period="5y">5 ani</button>
+                            <button class="btn btn-outline-light stock-period-btn" data-period="max">max</button>
+                        </div>
+                    </div>                                
+                    <div id="lightweight-stock-chart" style="height: 300;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- -----------------------------New Row: 3 Additional Cards -------------------------------------------------------------------->
+    <div class="row">
+        <!----------------------------Card 1------------------------------------------------------------------------------------------>
+        <div class="col-md-4 mb-4">
+            <div class="card text-white" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                <div class="card-header" style="height: 50px;">
+                    <h5 class="card-title mb-0">Venituri</h5>
+                </div>
+                <div class="d-flex justify-content-between align-items-center text-white text-center" style="height: 80px; gap: 16px; white-space: nowrap; overflow: hidden; width: calc(100% - 32px); margin: 0 16px;">
+                    <div><h5 class="mb-0 fw-semibold" id="rev-latest">2,945 mnRON</h5></div>
+                    <span class="text-white-150">|</span>
+                    <div><h5 class="mb-0 fw-semibold" id="rev-change">+17.3% a/a</h5></div>
+                    <span class="text-white-150">|</span>
+                    <div><h5 class="mb-0 fw-semibold" id="rev-period">FY/2024</h5></div>
+                </div>
+                <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                    <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                        <canvas id="revenueChartCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+        <!----------------------- Card 2 --------------------------------------------------------------------------------------------------->
+        <div class="col-md-4 mb-4">
+            <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                <div class="card-header" style="height: 50px;">
+                    <h5 class="card-title text-white">Venituri pe segmente</h5>
+                </div>
+                <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                    <div id="segmentRevenueChart" class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                        <canvas id="segmentRevenueChartCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                        <div id="donutCenterLabel" class="position-absolute top-50 start-50 translate-middle text-white text-center fw-semibold" style="pointer-events: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!------------------------- Card 3 ----------------------------------------------------------------------------------------------->
+        <div class="col-md-4 mb-4">
+            <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                <div class="card-header" style="height: 50px;">
+                    <h5 class="card-title text-white">Profit net</h5>
+                </div>
+                <div class="d-flex justify-content-between align-items-center text-white text-center" style="height: 80px; gap: 16px; white-space: nowrap; overflow: hidden; width: calc(100% - 32px); margin: 0 16px;">
+                    <div><h5 class="mb-0 fw-semibold" id="rev-latest">90.1 mnRON</h5></div>
+                    <span class="text-white-150">|</span>
+                    <div><h5 class="mb-0 fw-semibold" id="rev-change">-7.0% a/a</h5></div>
+                    <span class="text-white-150">|</span>
+                    <div><h5 class="mb-0 fw-semibold" id="rev-period">FY/2024</h5></div>
+                    </div>
+                <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                    <div id="ProfitmarginChart" class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                        <canvas id="profitabilityChartCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

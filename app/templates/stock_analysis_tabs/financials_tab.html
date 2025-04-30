@@ -1,0 +1,219 @@
+<!------------------------------------------------Tab 2 Evolutie financiara----------------------------------------------------------------------------------->
+<div id="financials" class="tab-pane fade" role="tabpanel">
+    <!-- Sub-tabs for Financial Statements -->
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+            <a class="nav-link active" id="pl-tab" data-bs-toggle="tab" href="#pl_statement" role="tab">Cont de profit și pierdere</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="bs-tab" data-bs-toggle="tab" href="#balance_sheet" role="tab">Bilanț contabil</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="cf-tab" data-bs-toggle="tab" href="#cf_statement" role="tab">Fluxuri de numerar</a>
+        </li>
+    </ul>
+        <!----------------------------------------------------Subtab 1 Contul de profit si pierdere------------------------------------------------------------------------------->
+    <!-- Profit&Loss Statement -->
+        <div class="tab-content">
+        <div id="pl_statement" class="tab-pane fade show active" role="tabpanel">
+            <!-- Buttons for selecting financial view -->
+            <div class="container-fluid px-0">
+                <div class="row align-items-center mb-4">
+                    <!-- Left Column: Description -->
+                    <div class="col-md-6">
+                        <p class="mb-0 fw-medium text-muted">Vizualizează mai jos evolutia Contului de Profit si Pierdere. Alege un mod de vizualizare.</p>
+                    </div>                    
+                    <!-- Right Column: Button Group -->
+                    <div class="col-md-6">
+                        <div class="btn-group w-100" role="group" aria-label="Financial View Selection">
+                            <button id="btn-pl-annual" type="button" class="btn btn-outline-secondary w-100 btn-sm">anual</button>
+                            <button id="btn-pl-quarterly" type="button" class="btn btn-outline-secondary w-100 btn-sm">trimestrial</button>
+                            <button id="btn-pl-quarterly-cml" type="button" class="btn btn-outline-secondary w-100 btn-sm">trimestrial cumulat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% set statement = pl_statement %}
+            {% if statement and statement | length > 0 %}
+            <div class="card-body">
+                <div class="table-responsive custom-scroll-wrapper">
+                    <div class="table-container">
+                        <table class="financials-table table primary-table-bordered table-hover align-middle text-white freeze-column">
+                            <thead class="thead-info">
+                                <tr>
+                                    <th class="text-start" scope="col">Metric</th>
+                                    {% set all_periods = [] %}
+                                    {% for r in statement %}
+                                        {% for p in r["values"].keys() %}
+                                            {% if p not in all_periods %}
+                                                {% set _ = all_periods.append(p) %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% set all_periods = all_periods|sort %}
+                                    {% for p in all_periods %}
+                                        <th class="text-end">{{ p }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in statement %}
+                                <tr>
+                                    <td class="text-start">{{ row["metric_name"] }}</td>
+                                    {% for p in all_periods %}
+                                    <td class="text-end">
+                                        {% if p in row["values"] %}
+                                            {{ row["values"][p]|format_number }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+                <p>📊 Date financiare indisponibile.</p>
+            {% endif %}                    
+        </div>
+        <!----------------------------------------------------Subtab 2 Bilant Contabil------------------------------------------------------------------------------->
+        <!-- Balance Sheet -->
+        <div id="balance_sheet" class="tab-pane fade" role="tabpanel">
+            <!-- Buttons for selecting financial view -->
+            <div class="container-fluid px-0">
+                <div class="row align-items-center mb-4">
+                    <!-- Left Column: Description -->
+                    <div class="col-md-6">
+                        <p class="mb-0 fw-medium text-muted">Vizualizează mai jos evolutia Bilantului Contabil. Alege un mod de vizualizare.</p>
+                    </div>                    
+                    <!-- Right Column: Button Group -->
+                    <div class="col-md-6">
+                        <div class="btn-group w-100" role="group" aria-label="Financial View Selection">
+                            <button id="btn-bs-annual" type="button" class="btn btn-outline-secondary w-100 btn-sm">anual</button>
+                            <button id="btn-bs-quarterly-cml" type="button" class="btn btn-outline-secondary w-100 btn-sm">trimestrial cumulat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% set statement = bs_statement %}
+            {% if statement and statement | length > 0 %}
+            <div class="card-body">
+                <div class="table-responsive custom-scroll-wrapper">
+                    <div class="table-container">
+                        <table class="financials-table table primary-table-bordered table-hover align-middle text-white freeze-column">
+                            <thead class="thead-info">
+                                <tr>
+                                    <th class="text-start" scope="col">Metric</th>
+                                    {% set all_periods = [] %}
+                                    {% for r in statement %}
+                                        {% for p in r["values"].keys() %}
+                                            {% if p not in all_periods %}
+                                                {% set _ = all_periods.append(p) %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% set all_periods = all_periods|sort %}
+                                    {% for p in all_periods %}
+                                        <th class="text-end">{{ p }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in statement %}
+                                <tr>
+                                    <td class="text-start">{{ row["metric_name"] }}</td>
+                                    {% for p in all_periods %}
+                                    <td class="text-end">
+                                        {% if p in row["values"] %}
+                                            {{ row["values"][p]|format_number }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+                <p>📊 Date financiare indisponibile.</p>
+            {% endif %}
+            
+        </div>
+        <!----------------------------------------------------Subtab 3 Fluxuri de numerar------------------------------------------------------------------------------->
+        <!-- CF Statement -->
+        <div id="cf_statement" class="tab-pane fade" role="tabpanel">
+            <!-- Buttons for selecting financial view -->
+            <div class="container-fluid px-0">
+                <div class="row align-items-center mb-4">
+                    <!-- Left Column: Description -->
+                    <div class="col-md-6">
+                        <p class="mb-0 fw-medium text-muted">Vizualizează mai jos evolutia Fluxurilor de Numerar. Alege un mod de vizualizare.</p>
+                    </div>                    
+                    <!-- Right Column: Button Group -->
+                    <div class="col-md-6">
+                        <div class="btn-group w-100" role="group" aria-label="Financial View Selection">
+                            <button id="btn-cf-annual" type="button" class="btn btn-outline-secondary w-100 btn-sm">anual</button>
+                            <button id="btn-cf-quarterly" type="button" class="btn btn-outline-secondary w-100 btn-sm">trimestrial</button>
+                            <button id="btn-cf-quarterly-cml" type="button" class="btn btn-outline-secondary w-100 btn-sm">trimestrial cumulat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% set statement = cf_statement %}
+            {% if statement and statement | length > 0 %}
+            <div class="card-body">
+                <div class="table-responsive custom-scroll-wrapper">
+                    <div class="table-container">
+                        <table class="financials-table table primary-table-bordered table-hover align-middle text-white freeze-column">
+                            <thead class="thead-info">
+                                <tr>
+                                    <th class="text-start" scope="col">Metric</th>
+                                    {% set all_periods = [] %}
+                                    {% for r in statement %}
+                                        {% for p in r["values"].keys() %}
+                                            {% if p not in all_periods %}
+                                                {% set _ = all_periods.append(p) %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% set all_periods = all_periods|sort %}
+                                    {% for p in all_periods %}
+                                        <th class="text-end">{{ p }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in statement %}
+                                <tr>
+                                    <td class="text-start">{{ row["metric_name"] }}</td>
+                                    {% for p in all_periods %}
+                                    <td class="text-end">
+                                        {% if p in row["values"] %}
+                                            {{ row["values"][p]|format_number }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+                <p>📊 Date financiare indisponibile.</p>
+            {% endif %}
+
+        </div>
+    </div>
+</div>

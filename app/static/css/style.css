@@ -26744,23 +26744,24 @@ p.tight {
   position: relative;
   width: 100%;
   overflow-x: auto;
-  overflow-y: visible;
+  overflow-y: hidden;
   margin-bottom: 1rem;
 }
 
 /* Style for tables with frozen first column */
 .table-frozen-column {
   position: relative;
+  border-collapse: separate;
   margin-bottom: 0;
 }
 
 /* Style for the frozen first column */
-.table-frozen-column th:first-child,
-.table-frozen-column td:first-child {
+.table-frozen-column td:first-child,
+.table-frozen-column th:first-child {
   position: sticky;
   left: 0;
-  z-index: 1;
-  background-color: #2a2a2a; /* Dark background to match your theme */
+  z-index: 2;
+  background-color:#311898;
   border-right: 2px solid #4e4e4e; /* Border to separate frozen column */
 }
 
@@ -26775,6 +26776,7 @@ p.tight {
   width: 4px;
   background: linear-gradient(to right, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0));
   pointer-events: none;
+  z-index: 4;
 }
 
 /* Ensure text doesn't wrap in the frozen column */
@@ -26792,7 +26794,22 @@ p.tight {
 
 /* Ensure the header has the correct background color */
 .table-frozen-column thead th:first-child {
-  background-color: #212529; /* Match Bootstrap's dark table header */
-  z-index: 2; /* Higher z-index to stay on top of body cells */
+  background-color: var(--primary-hover); /* Match Bootstrap's dark table header */
+  z-index: 3; /* Higher z-index to stay on top of body cells */
 }
 
+/* SCROLLBAR STYLING */
+.table-responsive-container::-webkit-scrollbar {
+  height: 8px;
+}
+.table-responsive-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.table-responsive-container::-webkit-scrollbar-thumb {
+  background-color: var(--primary-hover);
+  border-radius: 6px;
+  transition: background 0.2s ease-in-out;
+}
+.table-responsive-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-hover);
+}
