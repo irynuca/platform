@@ -25,7 +25,12 @@ from data_handler import (
     get_profit_and_margin_data,
     get_revenue_qtl_and_change_data,
     get_operating_profit_qtl_and_margin_data,
-    get_net_profit_qtl_and_margin_data
+    get_net_profit_qtl_and_margin_data,
+    get_dividends,
+    get_dividends_dps_and_growth,
+    get_dividend_yield_history,
+    get_payout_ratio_history,
+    get_dividends_to_fcfe_history,
 )
 
 # ---------------- TEST FUNCTIONS ---------------- #
@@ -97,6 +102,31 @@ def test_net_profit_qtl_and_margin_data(ticker):
     print(get_net_profit_qtl_and_margin_data(ticker))
     print()
 
+def test_get_dividends(ticker):
+    print("➡️ Testing get_dividends")
+    print(get_dividends(ticker))
+    print()
+
+def test_get_dividends_dps_and_growth(ticker):
+    print("➡️ Testing historical DPS and yoy change")
+    print(get_dividends_dps_and_growth(ticker))
+    print()
+
+def test_get_dividend_yield_history(ticker):
+    print("➡️ Testing historical dividend yield")
+    print(get_dividend_yield_history(ticker))
+    print()
+
+def test_get_payout_ratio_history(ticker):
+    print("➡️ Testing historical dividend payout ratio")
+    print(get_payout_ratio_history(ticker))
+    print()
+
+def test_get_dividends_to_fcfe_history(ticker):
+    print("➡️ Testing historical Dividend/FCFE ratio")
+    print(get_dividends_to_fcfe_history(ticker))
+    print()
+
 # ---------------- RUNNER ---------------- #
 
 test_functions = {
@@ -113,6 +143,11 @@ test_functions = {
     "11": test_revenue_qtl_and_change_data,
     "12": test_operating_profit_qtl_and_margin_data,
     "13": test_net_profit_qtl_and_margin_data,
+    "14": test_get_dividends,
+    "15": test_get_dividends_dps_and_growth,
+    "16": test_get_dividend_yield_history,
+    "17": test_get_payout_ratio_history,
+    "18": test_get_dividends_to_fcfe_history
 }
 
 def main():

@@ -43,6 +43,8 @@ def convert_csv_to_long_format(input_file, output_file, metadata_rows=10):
     valid_metric_columns = df_metrics_transposed.columns.difference(metadata_columns, sort=False).tolist()
     df_final = df_metrics_transposed[metadata_columns + valid_metric_columns]
  
+    # Save the original order of metrics (columns)
+    metric_order = {name: i for i, name in enumerate(valid_metric_columns)}
 
     df_long = df_final.melt(
         id_vars=metadata_columns,
@@ -50,6 +52,9 @@ def convert_csv_to_long_format(input_file, output_file, metadata_rows=10):
         value_name="value"
     )
     print("df_long: \n", df_long)
+    
+    df_long["line_order"] = df_long["metric_name_ro"].map(metric_order)
+
     # Optional: Remove rows with missing metric names or values
     df_long = df_long.dropna(subset=["metric_name_ro", "value"], how="all")
 
@@ -102,14 +107,14 @@ def update_financials_db_from_csv(output_file, DB_PATH, ticker, statement_name):
             INSERT OR REPLACE INTO financial_data (
                 company_ticker, statement_name, statement_type, period_start,
                 period_end, period_type, aggr_type, currency, metric_name_ro, value,
-                metric_parent, last_updated
+                metric_parent, last_updated, line_order
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             row["company_ticker"], row["statement_name"], row["statement_type"],
             row["period_start"], row["period_end"], row["period_type"],
             row["aggr_type"], row["currency"], row["metric_name_ro"], row["value"],
-            row.get("metric_parent"), row.get("last_updated")
+            row.get("metric_parent"), row.get("last_updated"), row.get("line_order")
         ))
 
     conn.commit()

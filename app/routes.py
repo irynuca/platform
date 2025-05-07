@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from .data_handler import get_stock_overview, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios
-from .data_handler import get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data, get_revenue_qtl_and_change_data
-from .data_handler import get_operating_profit_qtl_and_margin_data, get_net_profit_qtl_and_margin_data, get_chart_comment, get_revenue_annual_and_change_data
+from .data_handler import (get_stock_overview, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios, 
+                           get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data, get_revenue_qtl_and_change_data, 
+                           get_operating_profit_qtl_and_margin_data, get_net_profit_qtl_and_margin_data, get_chart_comment, 
+                           get_revenue_annual_and_change_data, get_dividends, get_dividends_dps_and_growth, get_dividend_yield_history,
+                           get_payout_ratio_history, get_dividends_to_fcfe_history)
 import json
 
 main = Blueprint('main', __name__)
@@ -47,6 +49,9 @@ def analysis(ticker):
         return f"<h1>{stock_info['error']}</h1>", 404
 
     business_description = stock_info.get("longBusinessSummary", "Descrierea companiei nu este disponibilă.")
+    dividends=get_dividends(ticker)
+    last=dividends[0] if dividends else {}
+    previous = dividends[1] if len(dividends) > 1 else {}
 
     return render_template(
         "stock_analysis.html",
@@ -63,6 +68,19 @@ def analysis(ticker):
         comment_revenue_growth=comment_revenue_growth,
         comment_operating_profit=comment_operating_profit,
         comment_net_profit=comment_net_profit,
+        #get_dividends
+        DPS_yoy_change=last.get("dividends_yoy_change"),
+        dividend_status=last.get("dividend_status", "").strip().lower(),
+        last_amount=last.get("DPS_value"),
+        payment_date=last.get("payment_date"),
+        previous_payment_date=previous.get("payment_date"),
+        last_ex_date=last.get("ex_dividend_date"),
+        last_type=last.get("dividend_type"),
+        last_frequency="Trimestrial",  # or from another field if stored
+        dividend_yield=last.get("dividend_yield"),
+        previous_dividend_yield=previous.get("dividend_yield"),  # optional
+        payout_ratio=last.get("payout_ratio"),
+        previous_payout_ratio=previous.get("payout_ratio"),      # optional
         **stock_info
     )
 
@@ -141,6 +159,26 @@ def net_profit_qtl_and_margin_data(ticker):
 @main.route("/revenue_annual_and_change_data/<ticker>")
 def revenue_annual_and_change_data(ticker):
     data = get_revenue_annual_and_change_data(ticker)
+    return jsonify(data)
+
+@main.route("/dividends/dps_and_growth/<ticker>")
+def dividends_dps_and_growth(ticker):
+    data = get_dividends_dps_and_growth(ticker)
+    return jsonify(data)
+
+@main.route("/dividends/yield_history/<ticker>")
+def dividend_yield_history(ticker):
+    data = get_dividend_yield_history(ticker)
+    return jsonify(data)
+
+@main.route("/dividends/payout_ratio/<ticker>")
+def payout_ratio_history(ticker):
+    data = get_payout_ratio_history(ticker)
+    return jsonify(data)
+
+@main.route("/dividends/dividends_to_fcfe/<ticker>")
+def dividends_to_fcfe_history(ticker):
+    data = get_dividends_to_fcfe_history(ticker)
     return jsonify(data)
 
 

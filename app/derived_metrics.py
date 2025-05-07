@@ -46,6 +46,33 @@ def calculate_net_debt(interest_bearing_debt, cash_and_equivalents):
         return None
     return interest_bearing_debt - (cash_and_equivalents or 0)
 
+def calculate_FCFE(net_operating_cash_flow, capex, net_borrowings):
+    if net_operating_cash_flow is None or capex is None:
+        print("❌ Missing required fields: Operating Cash Flow or CAPEX.")
+        return None
+
+    net_borrowings = net_borrowings or 0  # Treat None as 0
+    return net_operating_cash_flow - capex + net_borrowings
+
+def calculate_capex(purchases_of_ppe, purchases_of_intangibles):
+    if purchases_of_ppe is None:
+        print("❌ CAPEX data missing — cannot compute.")
+        return None
+    purchases_of_intangibles=purchases_of_intangibles or 0
+    return -(purchases_of_ppe+purchases_of_intangibles)
+
+def calculate_net_borrowings(repayment_lt, repayment_st, proceeds_lt, proceeds_st):
+    all_missing = all(x is None for x in [repayment_lt, repayment_st, proceeds_lt, proceeds_st])
+    
+    if all_missing:
+        print("⚠️ All net borrowing fields are missing — assuming zero.")
+    
+    total_repayment = (repayment_lt or 0) + (repayment_st or 0)
+    total_proceeds = (proceeds_lt or 0) + (proceeds_st or 0)
+    
+    return total_proceeds + total_repayment
+
+
 DERIVED_METRIC_DEFINITIONS = {
     "EBIT": {
         "function": calculate_ebit,
@@ -74,10 +101,34 @@ DERIVED_METRIC_DEFINITIONS = {
         "metric_name_eng": "Net debt",
         "metric_name_ro": "Datorie neta",
         "formula": "Datorii purtatoare de dobanda - Numerar si echivalente de numerar"
-    }
+    },
+    "Capex": {
+        "function": calculate_capex,
+        "required_metrics": {"Purchases of property, plant and equipment":"Purchases of property, plant and equipment", "Purchases of intangible assets": "Purchases of intangible assets"},
+        "metric_name_eng": "Capex",
+        "metric_name_ro": "Capex",
+        "formula": "Plati pentru achizitia de imobilizari corporale+Plati pentru achizitia de imobilizari necorporale"
+    },
+    "Net borrowings": {
+        "function": calculate_net_borrowings,
+        "required_metrics": {"Repayment of long-term borrowings":"Repayment of long-term borrowings", 
+                             "Repayment of short-term borrowings": "Repayment of short-term borrowings", 
+                             "Proceeds from long-term borrowings":"Proceeds from long-term borrowings", 
+                             "Proceeds from short-term borrowings":"Proceeds from short-term borrowings"},
+        "metric_name_eng": "Net borrowings",
+        "metric_name_ro": "Imprumuturi nete",
+        "formula": "Plati ale imprumuturilor bancare pe termen lung+Plati ale imprumuturilor bancare pe termen scurt+Trageri din imprumuturi bancare pe termen scurt+Trageri din imprumuturi bancare pe termen lung"
+    },
+    "FCFE": {
+        "function": calculate_FCFE,
+        "required_metrics": {"Net operating cash flow":"Net operating cash flow", "Capex": "Capex", "Net borrowings": "Net borrowings"},
+        "metric_name_eng": "FCFE",
+        "metric_name_ro": "FCFE",
+        "formula": "Numerar net din exploatare-Capex+Imprumuturi nete"
+    },
+    
     # More metrics can be added here
 }
-
 
 # ------------------------------
 # Derived Metric Calculation
@@ -279,7 +330,10 @@ def run_all_derived_calculations(DB_PATH, tickers):
         "EBIT",
         "EBITDA",
         "Interest-bearing debt",  # dependency
-        "Net debt"                # depends on Interest-bearing debt
+        "Net debt",
+        "Capex",
+        "Net borrowings",
+        "FCFE"              
     ]
 
     period_types = ["annual", "quarter"]

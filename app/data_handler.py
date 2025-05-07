@@ -33,7 +33,6 @@ def get_company_details_from_db(ticker):
     finally:
         conn.close()
 
-
 def get_latest_stock_indicators(ticker):
     conn = sqlite3.connect(DB_PATH)
     query = """
@@ -228,7 +227,7 @@ def get_historical_stock_data(ticker, period="1mo", interval="1d"):
 
     try:
         days = period_map.get(period, 30)
-        query = "SELECT date, close_price FROM stock_data WHERE ticker = ?"
+        query = "SELECT date, close_price FROM stock_data WHERE company_ticker = ?"
         params = [ticker.upper()]
 
         if days is not None:
@@ -340,7 +339,6 @@ def get_financial_statement(ticker, statement_name, period_type, aggr_type):
 
     return final_list
 
-
 def get_financial_statement(ticker, statement_name, period_type, aggr_type):
     conn = sqlite3.connect(DB_PATH)
     
@@ -421,7 +419,6 @@ def get_financial_statement(ticker, statement_name, period_type, aggr_type):
     print(json.dumps(final_list, indent=4, ensure_ascii=False))
 
     return final_list
-
 
 def get_grouped_financial_ratios(ticker, period_type, aggr_type):
     conn = sqlite3.connect(DB_PATH)
@@ -554,7 +551,6 @@ def get_segment_revenue_notes(ticker):
     "period": latest_period,
     "data": segment_data}
 
-
 def get_profit_and_margin_data(ticker, period_type="annual", aggr_type="cml"):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -659,7 +655,6 @@ def get_revenue_qtl_and_change_data(ticker):
         "change_rate": change_rate
     }
 
-
 def get_operating_profit_qtl_and_margin_data(ticker):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -710,7 +705,6 @@ def get_operating_profit_qtl_and_margin_data(ticker):
         "operating_profit": operating_profit,
         "operating_margin": operating_margin
     }
-
 
 def get_net_profit_qtl_and_margin_data(ticker):
     conn = sqlite3.connect(DB_PATH)
@@ -824,4 +818,124 @@ def get_revenue_annual_and_change_data(ticker):
         "change_rate": change_rate
     }
 
+def get_dividends(ticker):
+    """
+    Fetch dividend data for a given ticker as a list of dicts.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row  # Enables column name access
+    cursor = conn.cursor()
 
+    cursor.execute("""
+        SELECT
+            DPS_year,
+            DPS_value,
+            dividends_yoy_change,      
+            net_profit,
+            total_dividends,
+            payout_ratio,
+            dividend_yield,
+            fcfe,
+            dividends_to_fcfe,
+            ex_dividend_date,
+            payment_date,
+            dividend_type,
+            dividend_status
+        FROM dividends
+        WHERE company_ticker = ?
+        ORDER BY ex_dividend_date DESC
+    """, (ticker,))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Convert rows to list of dicts
+    return [dict(row) for row in rows]
+
+def get_dividends_dps_and_growth(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DPS_year, DPS_value, dividends_yoy_change
+        FROM dividends
+        WHERE company_ticker = ?
+    """, (ticker,))
+    
+    rows = cursor.fetchall()
+    conn.close()
+
+    grouped = defaultdict(lambda: {"DPS_value": 0, "dividends_yoy_change": None})
+    for row in rows:
+        year = row["DPS_year"]
+        grouped[year]["DPS_value"] += row["DPS_value"] or 0
+        if row["dividends_yoy_change"] is not None:
+            grouped[year]["dividends_yoy_change"] = row["dividends_yoy_change"]
+
+    return [
+        {"year": year, "DPS_value": data["DPS_value"], "dividends_yoy_change": data["dividends_yoy_change"]}
+        for year, data in sorted(grouped.items())
+    ]
+
+def get_dividend_yield_history(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DPS_year, dividend_yield
+        FROM dividends
+        WHERE company_ticker = ?
+    """, (ticker,))
+    
+    rows = cursor.fetchall()
+    conn.close()
+
+    grouped = defaultdict(float)
+    for row in rows:
+        grouped[row["DPS_year"]] += row["dividend_yield"] or 0
+
+    return [{"year": year, "dividend_yield": val} for year, val in sorted(grouped.items())]
+
+
+def get_payout_ratio_history(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DPS_year, payout_ratio
+        FROM dividends
+        WHERE company_ticker = ?
+    """, (ticker,))
+    
+    rows = cursor.fetchall()
+    conn.close()
+
+    grouped = defaultdict(float)
+    for row in rows:
+        grouped[row["DPS_year"]] += row["payout_ratio"] or 0
+
+    return [{"year": year, "payout_ratio": val} for year, val in sorted(grouped.items())]
+
+
+def get_dividends_to_fcfe_history(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT DPS_year, dividends_to_fcfe
+        FROM dividends
+        WHERE company_ticker = ?
+    """, (ticker,))
+    
+    rows = cursor.fetchall()
+    conn.close()
+
+    grouped = defaultdict(float)
+    for row in rows:
+        grouped[row["DPS_year"]] += row["dividends_to_fcfe"] or 0
+
+    return [{"year": year, "dividends_to_fcfe": val} for year, val in sorted(grouped.items())]

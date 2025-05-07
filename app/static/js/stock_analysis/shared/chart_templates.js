@@ -268,3 +268,112 @@ window.createBarLineChart = function ({
         }
     });
 };
+
+window.createLineChart = function ({
+    canvasId,
+    labels,
+    values,
+    label = "Valori",
+    borderColor = "#53CAFD",
+    pointColor = "#53CAFD",
+    backgroundColor = "transparent",
+    maxY = null,
+    stepY = null,
+    tooltipLabel = null
+}) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return console.error(`❌ Canvas "${canvasId}" not found`);
+    const ctx = canvas.getContext("2d");
+
+    // Destroy previous instance if it exists
+    if (window[canvasId + "Instance"]) {
+        window[canvasId + "Instance"].destroy();
+    }
+
+    Chart.defaults.font.family = "Poppins";
+
+    // Auto-scale y-axis
+    const maxVal = Math.max(...values);
+    const niceMax = maxY || Math.ceil(maxVal * 1.1 * 100) / 100;
+    const step = stepY || Math.ceil(niceMax / 4 * 100) / 100;
+    const roundedMax = Math.ceil(niceMax / step) * step;
+
+    // Create the gradient for the line fill
+    const gradientFill = ctx.createLinearGradient(0, 0, 0, ctx.canvas.clientHeight);
+    gradientFill.addColorStop(0, pointColor + "CC"); // 80% opacity
+    gradientFill.addColorStop(1, pointColor + "00"); // 0% opacity
+
+    window[canvasId + "Instance"] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label,
+                data: values,
+                fill: true,
+                borderColor,
+                backgroundColor: gradientFill,
+                tension: 0.3,
+                pointRadius: 5,
+                pointHoverRadius: 7,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 2000,
+                easing: 'easeOutQuart'
+            },
+            interaction: { mode: "index", intersect: false },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: roundedMax,
+                    ticks: {
+                        stepSize: step,
+                        color: "#fff",
+                        callback: v => `${v.toFixed(2)}%`
+                    },
+                    border: {
+                        display: true,
+                        color: "rgba(255,255,255,0.3)",
+                        width: 1
+                    }
+                },
+                x: {
+                    ticks: { color: "#fff" },
+                    grid: { drawOnChartArea: false, drawTicks: false },
+                    border: {
+                        display: true,
+                        color: "rgba(255,255,255,0.3)",
+                        width: 1
+                    }
+                }
+            },
+            plugins: {
+                datalabels: { display: false },
+                legend: {
+                    display: true,
+                    position: "top",
+                    labels: {
+                        color: "#fff",
+                        font: { size: 12 }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: "rgba(240,240,240,0.8)",
+                    titleColor: "#fff",
+                    bodyColor: "#fff",
+                    borderWidth: 0,
+                    titleFont: { weight: "bold" },
+                    bodyFont: { weight: "bold" },
+                    callbacks: {
+                        label: tooltipLabel || (ctx => `${ctx.dataset.label}: ${ctx.raw.toFixed(2)}%`)
+                    }
+                }
+            }
+        }
+    });
+};

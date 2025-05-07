@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -13,13 +14,91 @@ SHARES_BY_TICKER = {"AQ": 1200002400}
 # 🔗 Open one global connection (shared by all functions)
 conn = sqlite3.connect(DB_PATH)
 
+def fetch_and_store_stock_data(ticker):
+    shares_outstanding = SHARES_BY_TICKER.get(ticker)
+    if not shares_outstanding:
+        print(f"❌ Number of shares not defined for {ticker}")
+        return
+
+    print(f"📥 Fetching full history for {ticker}...")
+
+    yf_ticker = yf.Ticker(ticker + ".RO")
+    hist = yf_ticker.history(period="max", interval="1d")
+
+    if hist.empty:
+        print(f"❌ No price history available for {ticker}")
+        return
+
+    # Format & compute additional columns
+    hist.reset_index(inplace=True)
+    hist["date"] = hist["Date"].dt.strftime("%Y-%m-%d")
+    hist["close_price"] = hist["Close"].astype(float).round(4)
+    hist["volume"] = hist["Volume"]
+    hist["market_cap"] = (hist["close_price"] * shares_outstanding).astype(float)
+    hist["company_ticker"] = ticker
+    hist["source"] = "yfinance"
+
+    cols_to_keep = [
+        "company_ticker", "date", "close_price", "volume", "market_cap", "source"
+    ]
+    data = hist[cols_to_keep].copy()
+
+    # Add nullable columns for future updates
+    data.loc[:, "pe_ratio"] = None
+    data.loc[:,"eps_ttm"] = None
+    data.loc[:,"change_day"] = None
+    data.loc[:,"change_yoy"] = None
+    data.loc[:,"change_ytd"] = None
+
+    # Connect & insert into DB
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Create table if not exists
+    cursor.executescript("""
+    DROP TABLE IF EXISTS stock_data;              
+    CREATE TABLE IF NOT EXISTS stock_data (
+        company_ticker TEXT,
+        date TEXT,
+        close_price REAL,
+        volume INTEGER,
+        market_cap REAL,
+        pe_ratio REAL,
+        source TEXT,
+        eps_ttm REAL,
+        change_day REAL,
+        change_yoy REAL,
+        change_ytd REAL,
+        PRIMARY KEY (company_ticker, date)
+    )
+    """)
+
+    # Insert records
+    for _, row in data.iterrows():
+        cursor.execute("""
+        INSERT OR REPLACE INTO stock_data (
+            company_ticker, date, close_price, volume,
+            market_cap, pe_ratio, source, eps_ttm, change_day,
+            change_yoy, change_ytd
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            row["company_ticker"], row["date"], float(row["close_price"]),
+            row["volume"], float(row["market_cap"]),
+            float(row["pe_ratio"]), row["source"], float(row["eps_ttm"]),
+            row["change_day"], row["change_yoy"], row["change_ytd"]
+        ))
+
+    conn.commit()
+    conn.close()
+    print(f"✅ Stored {len(data)} rows for {ticker} into stock_data.")
+
 # 🔍 Get earnings release events
 def get_events(ticker):
     cursor = conn.cursor()
     cursor.execute("""
         SELECT event_date, period_start, period_end
         FROM company_events
-        WHERE ticker = ? AND event_type = 'earnings_release'
+        WHERE company_ticker = ? AND event_type = 'earnings_release'
         ORDER BY event_date
     """, (ticker,))
 
@@ -52,9 +131,9 @@ def get_financials(ticker):
     print(f"📈 Retrieved {len(rows)} financial entries for {ticker}:")
     financials = {}
     for row in rows:
-        start = datetime.strptime(row[0], "%d/%m/%Y").strftime("%Y-%m-%d")
-        end = datetime.strptime(row[1], "%d/%m/%Y").strftime("%Y-%m-%d")
-        value = float(row[2].replace(",", ""))  # ✅ Clean commas
+        start = pd.to_datetime(row[0]).strftime("%Y-%m-%d")
+        end = pd.to_datetime(row[1]).strftime("%Y-%m-%d")
+        value = float(row[2])
         financials[(start, end)] = value
         print(f"   ▶ ({start}, {end}) = {value}")
 
@@ -114,14 +193,14 @@ def update_eps_in_stock_data(ticker, eps_timeline):
             cursor.execute("""
                 UPDATE stock_data
                 SET eps_ttm = ?
-                WHERE ticker = ? AND date >= ? AND date < ?
+                WHERE company_ticker = ? AND date >= ? AND date < ?
             """, (eps, ticker, start_date, end_date))
         else:
             print(f"🟩 Updating EPS from {start_date} onward... EPS = {eps}")
             cursor.execute("""
                 UPDATE stock_data
                 SET eps_ttm = ?
-                WHERE ticker = ? AND date >= ?
+                WHERE company_ticker = ? AND date >= ?
             """, (eps, ticker, start_date))
 
     conn.commit()
@@ -138,7 +217,7 @@ def update_pe_ratio(ticker):
     cursor.execute("""
         UPDATE stock_data
         SET pe_ratio = close_price / eps_ttm
-        WHERE ticker = ? AND eps_ttm IS NOT NULL AND eps_ttm != 0
+        WHERE company_ticker = ? AND eps_ttm IS NOT NULL AND eps_ttm != 0
     """, (ticker,))
 
     conn.commit()
@@ -172,10 +251,10 @@ def compute_ytd(df, current_date, current_price, threshold_days=5):
 
 def update_variations():
     conn = sqlite3.connect(DB_PATH)
-    tickers = pd.read_sql("SELECT DISTINCT ticker FROM stock_data", conn)["ticker"]
+    tickers = pd.read_sql("SELECT DISTINCT company_ticker FROM stock_data", conn)["company_ticker"]
 
     for ticker in tickers:
-        df = pd.read_sql(f"SELECT date, close_price FROM stock_data WHERE ticker = '{ticker}'", conn)
+        df = pd.read_sql(f"SELECT date, close_price FROM stock_data WHERE company_ticker = '{ticker}'", conn)
         df["date"] = pd.to_datetime(df["date"])
         df = df.sort_values("date").reset_index(drop=True)
 
@@ -189,7 +268,7 @@ def update_variations():
             update_query = """
                 UPDATE stock_data 
                 SET change_day = ?, change_yoy = ?, change_ytd = ?
-                WHERE ticker = ? AND date = ?
+                WHERE company_ticker = ? AND date = ?
             """
             conn.execute(update_query, (
                 round(row["change_day"], 2) if not pd.isna(row["change_day"]) else None,
@@ -209,12 +288,20 @@ if __name__ == "__main__":
     ticker = "AQ"
     shares = SHARES_BY_TICKER[ticker]
 
+    # Fetch historical price & volume data and populate stock_data table
+    fetch_and_store_stock_data(ticker)
+
+    # Get earnings events and financial results
     events = get_events(ticker)
     financials = get_financials(ticker)
+
+    # Compute EPS timeline
     eps_timeline = build_eps_timeline(events, financials, shares)
 
     for eps in eps_timeline:
         print(f"📅 From {eps['from_date']}: EPS_TTM = {round(eps['eps_ttm'], 4)}")
 
+    # Update stock_data with EPS values and then compute ratios
     update_eps_in_stock_data(ticker, eps_timeline)
+    update_pe_ratio(ticker)
     update_variations()

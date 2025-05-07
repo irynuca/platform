@@ -1,0 +1,54 @@
+﻿company_ticker,metric_name_ro,metric_name_eng,generalized_metric_eng,generalized_metric_ro,statement_name,metric_parent
+AQ,Profitul exercitiului financiar,,,Profitul exercitiului financiar,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Amortizarea imobilizarilor corporale,,,Amortizarea imobilizarilor corporale,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Amortizarea imobilizarilor necorporale,,,Amortizarea imobilizarilor necorporale,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Pierdere/(Castig) din cedarea imobilizarilor corporale,,,Pierdere/(Castig) din cedarea imobilizarilor corporale,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Amortizarea activelor aferente drepturilor de utilizare,,,Amortizarea activelor aferente drepturilor de utilizare,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Reversarea pierderilor de credit/(Pierderile de credit asteptate),,,Reversarea pierderilor de credit/(Pierderile de credit asteptate),Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Pierderi din deprecierea creantelor,,,Pierderi din deprecierea creantelor,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Alte castiguri si pierderi,,,Alte castiguri si pierderi,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,"Modificari in provizioane, net",,,"Modificari in provizioane, net",Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Rezultat financiar net,,,Rezultat financiar net,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Castig din achizitie,,,Castig din achizitie,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Cheltuiala cu impozitul pe profit,,,Cheltuiala cu impozitul pe profit,Cash Flow,Numerar generat din activitatea operationala inainte de capital de lucru
+AQ,Numerar generat din activitatea de exploatare inainte de capital de lucru,,,Numerar generat din activitatea operationala inainte de capital de lucru,Cash Flow,Numerar generat din activitatea operationala dupa capitalul de lucru
+AQ,Descresteri / (cresteri) ale stocurilor,,,Descresteri / (cresteri) ale stocurilor,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Descresteri / (cresteri) ale creantelor comerciale,,,Descresteri / (cresteri) ale creantelor comerciale,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Descresteri / (cresteri) ale altor creante,,,Descresteri / (cresteri) ale altor creante,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Descresteri / (cresteri) ale cheltuielilor in avans,,,Descresteri / (cresteri) ale cheltuielilor in avans,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Cresteri / (descresteri) ale datoriilor comerciale,,,Cresteri / (descresteri) ale datoriilor comerciale,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Cresteri / (descresteri) ale altor datorii,,,Cresteri / (descresteri) ale altor datorii,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Cresteri / (descresteri) ale provizioanelor si beneficiilor pentru angajati,,,Cresteri / (descresteri) ale provizioanelor si beneficiilor pentru angajati,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Cresteri / (descresteri) ale datoriilor privind contractele cu clientii,,,Cresteri / (descresteri) ale datoriilor privind contractele cu clientii,Cash Flow,Modificari totale in capitalul de lucru
+AQ,Modificari totale in capitalul de lucru,,,Modificari totale in capitalul de lucru,Cash Flow,Numerar generat din activitatea operationala dupa capitalul de lucru
+AQ,Numerar generat din activitatea de exploatare,,,Numerar generat din activitatea operationala dupa capitalul de lucru,Cash Flow,Numerar net din activitatea operationala
+AQ,Dobanzi platite,,,Dobanzi platite,Cash Flow,Numerar net din activitatea operationala
+AQ,Impozit pe profit platit,,,Impozit pe profit platit,Cash Flow,Numerar net din activitatea operationala
+AQ,Plati aferente dobanzi leasing,,,Plati aferente dobanzilor leasing,Cash Flow,Numerar net din activitatea operationala
+AQ,Numerar net din activitatea de exploatare,,,Numerar net din activitatea operationala,Cash Flow,(Descresterea)/cresterea neta a numerarului si a echivalentelor de numerar
+AQ,Plati pentru achizitia de imobilizari corporale,,,Plati pentru achizitia de imobilizari corporale,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Plati pentru achizitia de imobilizari necorporale,,,Plati pentru achizitia de imobilizari necorporale,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Plati pentru achizitia de investitii imobiliare,,,Plati pentru achizitia de investitii imobiliare,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,"Plati pentru achizitia de filiale, net de numerarul achizitionat",,,"Plati pentru achizitia de filiale, net de numerarul achizitionat",Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Plati pentru imprumuturi acordate partilor afiliate,,,Plati pentru imprumuturi acordate partilor afiliate,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Incasari din vanzarea de imobilizari corporale,,,Incasari din vanzarea de imobilizari corporale,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Incasari din imprumuturi acordate partilor afiliate,,,Incasari din imprumuturi acordate partilor afiliate,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Incasari din vanzarea de investitii imobiliare,,,Incasari din vanzarea de investitii imobiliare,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Dividende incasate,,,Dividende incasate,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Dobanzi incasate,,,Dobanzi incasate,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Descrestere/(crestere) in depozitele pe termen scurt,,,Descrestere/(crestere) in depozitele pe termen scurt,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,(Crestere) din alte active – cont escrow,,,(Crestere) din alte active – cont escrow,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Numerar transferat la achizitia de filiale,,,Numerar transferat la achizitia de filiale,Cash Flow,Numerar net utilizat in activitatea de investitii
+AQ,Numerar net utilizat in activitatea de investitii,,,Numerar net utilizat in activitatea de investitii,Cash Flow,(Descresterea)/cresterea neta a numerarului si a echivalentelor de numerar
+AQ,Incasari din emisiuni de actiuni,,,Incasari din emisiuni de actiuni,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Plati ale imprumuturilor bancare pe termen lung,,,Plati ale imprumuturilor bancare pe termen lung,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Plati ale imprumuturilor bancare pe termen scurt,,,Plati ale imprumuturilor bancare pe termen scurt,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Trageri din imprumuturi bancare pe termen scurt,,,Trageri din imprumuturi bancare pe termen scurt,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Trageri din imprumuturi bancare pe termen lung,,,Trageri din imprumuturi bancare pe termen lung,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Restituire alte imprumuturi,,,Plati ale altor imprumuturi,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Plati aferente leasing,,,Plati aferente leasing,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Dividende platite,,,Dividende platite,Cash Flow,Numerar net utilizat in activitatea de finantare
+AQ,Numerar net utilizat in activitatea de finantare,,,Numerar net utilizat in activitatea de finantare,Cash Flow,(Descresterea)/cresterea neta a numerarului si a echivalentelor de numerar
+AQ,Numerar si echivalente de numerar la inceputul perioadei,,,Numerar si echivalente de numerar la inceputul perioadei,Cash Flow,Numerar si echivalente de numerar la sfarsitul perioadei
+AQ,(Descresterea)/cresterea neta a numerarului si a echivalentelor de numerar,,,(Descresterea)/cresterea neta a numerarului si a echivalentelor de numerar,Cash Flow,Numerar si echivalente de numerar la sfarsitul perioadei
+AQ,Numerar si echivalente de numerar la sfarsitul perioadei,,,Numerar si echivalente de numerar la sfarsitul perioadei,Cash Flow,Numerar si echivalente de numerar

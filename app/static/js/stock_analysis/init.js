@@ -78,9 +78,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (container) {
                     container.innerHTML = "<p>📊 Se încarcă datele financiare...</p>";
                 }
-    
                 loadFinancialData("pl_statement", "annual", "cml");
             }
+
             else if (targetTabId === "#indicators") {
                 console.log("🟢 Switched to Ratios tab");
     
@@ -88,12 +88,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (container) {
                     container.innerHTML = "<p>📊 Se încarcă indicatorii financiari...</p>";
                 }
-    
                 loadRatiosData("annual", "cml");
             }
+
+            else if (targetTabId === "#dividends") {
+                const el = document.getElementById("dividend-countdown");
+                const exDate = el?.dataset?.exdate;
+                if (exDate) {initCountdownClock(exDate);}
+                renderDPSChart();
+                renderDividendYieldChart();
+                renderDividendPayoutChart();
+                renderDividendtoFCFEChart();
+              }              
         });
-    });    
-})
+    });
+});
 
 function applyFrozenColumnToNewTables() {
     const tables = document.querySelectorAll('table.freeze-column:not(.table-frozen-column)');

@@ -4,69 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ ticker }} - Analiza Fundamentală</title>
+
     <!-- Bootstrap 5.3 CSS from CDN -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-
-    <!-- Line Awesome Icons -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/line-awesome.min.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-
-    <!-- Theme & Vendor CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='icons/font-awesome/css/all.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/animate/animate.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/perfect-scrollbar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/jquery-nice-select/css/nice-select.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='vendor/jquery-autocomplete/jquery-ui.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/line-awesome.min.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <!-- jQuery First -->
+    <!--jQuery & Bootstrap bundle -->
     <script src="{{ url_for('static', filename='vendor/jquery/jquery.min.js') }}"></script>
+    <!--Latest Bootstrap 5.3 from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Plugins (jQuery must be above these) -->
-    <script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <!-- Core UI Plugins -->
     <script src="{{ url_for('static', filename='vendor/perfect-scrollbar/js/perfect-scrollbar.min.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/metismenu/js/metisMenu.min.js') }}"></script>
-
-    <!-- Dolab Settings -->
     <script src="{{ url_for('static', filename='js/dlab-settings.js') }}"></script>
-    
+
+    <!-- Chart Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
 
-    <!-- Flot Chart JS -->
-    <script src="{{ url_for('static', filename='vendor/flot/jquery.flot.js') }}"></script>
-    <script src="{{ url_for('static', filename='vendor/flot/jquery.flot.resize.js') }}"></script>
-
-    <script src="{{ url_for('static', filename='js/plugins-init/flot-init.js') }}"></script>
-    <!-- Chart.js v4 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <!-- DataLabels plugin for Chart.js v4 -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-
+    <!-- Global vars and shared chart helpers -->
     <script>const STOCK_TICKER = "{{ ticker }}";</script>
     <script src="{{ url_for('static', filename='js/stock_analysis/shared/chart_templates.js') }}"></script>
     <script src="{{ url_for('static', filename='js/stock_analysis/shared/chart_theme.js') }}"></script>
 
-    <!-- Summary tab charts -->
-    <script src="{{ url_for('static', filename='js/stock_analysis/charts/summary/revenue_chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/charts/summary/segment_revenue_chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/charts/summary/profitability_chart.js') }}"></script>
-
-    <!-- Fundamentals tab charts -->
-    <script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/revenue_growth_qtl_chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/operating_profit_qtl_chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/net_profit_qtl_chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/revenue_growth_annual_chart.js') }}"></script>
-
-
-
-
-    <script src="{{ url_for('static', filename='js/stock_analysis/load_stock_chart.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/load_financials_data.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/load_ratios_data.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/stock_analysis/init.js') }}"></script>
-
-
-
+    <script src="{{ url_for('static', filename='js/stock_analysis/countdown.js') }}"></script>
 
 </head>
 
@@ -102,7 +71,7 @@
 
             <!-- Middle: Stock Price & Variation -->
             <div class="col-md-4 text-center">
-                <h3 class="fw-bold">{{ last_price | round(2)}} RON</h3>
+                <h3 class="fw-bold">{{ last_price | float | round(2)}} RON</h3>
                 <p class="{% if price_variation|float >= 0 %}text-success{% else %}text-danger{% endif %}">
                     {{ price_variation }}%
                 </p>
@@ -129,7 +98,7 @@
             <div class="col-md-2">
                 <div class="row">
                     <div class="col-12">
-                        <p class="fw-bold text-purple">{{ (market_cap / 1_000_000) | round(1) | string | replace('.', ',') }} mnRON
+                        <p class="fw-bold text-purple">{{ (market_cap | float / 1_000_000) | round(1) }} mnRON
                         </p>
                     </div>
                     <div class="col-12">
@@ -154,7 +123,7 @@
             <div class="col-md-2">
                 <div class="row">
                     <div class="col-12">
-                        <p class="fw-bold text-purple">{{ pe_ratio | round(2) }}x</p>
+                        <p class="fw-bold text-purple">{{ pe_ratio | float | round(2) }}x</p>
                     </div>
                     <div class="col-12">
                         <p class="text-muted small">P/E</p>
@@ -200,17 +169,22 @@
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="fundamentals-tab" data-bs-toggle="tab" data-bs-target="#fundamentale" role="tab">
-                    <i class="la la-calculator me-2"></i> Fundamentale
+                    <i class="lar la-chart-bar me-2"></i> Fundamentale
                 </a>                
             </li>
             <li class="nav-item">
                 <a class="nav-link" data-bs-toggle="tab" data-bs-target="#financials">
-                    <i class="lar la-chart-bar me-2"></i> Evolutie financiara
+                    <i class="la la-history me-2"></i> Evolutie financiara
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="indicators-tab" data-bs-toggle="tab" data-bs-target="#indicators" role="tab" >
                     <i class="la la-calculator me-2"></i> Indicatori financiari
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="indicators-tab" data-bs-toggle="tab" data-bs-target="#dividends" role="tab" >
+                    <i class="la la-coins me-2"></i> Dividende
                 </a>
             </li>
         </ul>
@@ -222,56 +196,41 @@
         {% include 'stock_analysis_tabs/fundamentals_tab.html' %}
         {% include 'stock_analysis_tabs/financials_tab.html' %}
         {% include 'stock_analysis_tabs/indicators_tab.html' %}
+        {% include 'stock_analysis_tabs/dividends_tab.html' %}
     </div>
 </div>
-
-<!-- Load Chart -->
-<script src="https://unpkg.com/lightweight-charts@4.0.1/dist/lightweight-charts.standalone.production.js"></script>
-
 
 <script src="{{ url_for('static', filename='vendor/jquery-nice-select/js/jquery.nice-select.min.js') }}"></script> 
 <script src="{{ url_for('static', filename='vendor/jquery-autocomplete/jquery-ui.js') }}"></script>
 
 <script src="{{ url_for('static', filename='js/custom.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/dlabnav-init.js') }}"></script>
-<!-- Custom Logic - LAST -->
+
+<!-- ✅ Summary tab charts -->
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/summary/revenue_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/summary/segment_revenue_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/summary/profitability_chart.js') }}"></script>
+
+<!-- ✅ Fundamentals tab charts -->
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/revenue_growth_qtl_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/operating_profit_qtl_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/net_profit_qtl_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/revenue_growth_annual_chart.js') }}"></script>
+
+<!-- ✅ Data loaders -->
+<script src="{{ url_for('static', filename='js/stock_analysis/load_stock_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/load_financials_data.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/load_ratios_data.js') }}"></script>
+
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/dividends/DPS_and_growth.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/dividends/yield_history.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/dividends/payout_history.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/dividends/dividends_to_fcfe.js') }}"></script>
 
 
-<!-- DO NOT INCLUDE Bootstrap 5.3 JavaScript (Popper.js Included) -->
-<!--<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>-->
-<script src="{{ url_for('static', filename='js/highlight.min.js') }}"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const tables = document.querySelectorAll('table.freeze-column');
-        tables.forEach(table => {
-            table.classList.add('table-frozen-column');
-            const parent = table.parentElement;
-            if (!parent.classList.contains('table-responsive-container')) {
-                const container = document.createElement('div');
-                container.className = 'table-responsive-container';
-                table.parentNode.insertBefore(container, table);
-                container.appendChild(table);
-            }
-        });
-    });
 
-    function applyFrozenColumnToNewTables() {
-        const tables = document.querySelectorAll('table.freeze-column:not(.table-frozen-column)');
-        tables.forEach(table => {
-            table.classList.add('table-frozen-column');
-            const parent = table.parentElement;
-            if (!parent.classList.contains('table-responsive-container')) {
-                const container = document.createElement('div');
-                container.className = 'table-responsive-container';
-                table.parentNode.insertBefore(container, table);
-                container.appendChild(table);
-            }
-        });
-    }
-    applyFrozenColumnToNewTables();
-</script>
-
-
+<!-- ✅ App initializer (must be last) -->
+<script src="{{ url_for('static', filename='js/stock_analysis/init.js') }}"></script>
 </body>
 </html>
 

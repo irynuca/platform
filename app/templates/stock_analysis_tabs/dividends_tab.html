@@ -1,0 +1,212 @@
+<div class="tab-pane fade" id="dividends" role="tabpanel">
+    <div class="card shadow-sm mb-4" style="--bs-card-bg: rgba(94, 62, 208, 0.3);">
+        <div class="card-body">
+
+            <!-- 🔹 Card Title + Status Badge -->
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h4 class="card-title mb-0">Cel mai recent dividend</h4>
+              </div>
+              <span class="badge badge-pill fs-5
+                {% if dividend_status == 'anuntat' %}badge-primary
+                {% elif dividend_status == 'aprobat' %}badge-success
+                {% elif dividend_status == 'platit' %}badge-light
+                {% else %}badge-dark
+                {% endif %}">
+                {{ dividend_status | capitalize }}
+              </span>
+            </div>
+          
+            <!-- 🔹 6-Column Content Grid -->
+            <div class="row g-4 align-items-start">
+                <!-- 📦 Column 1: Dividend Amount Box -->
+                <div class="col-md-2 col-sm-6">
+                    <div class="p-3 rounded" style="background-color: var(--bs-info); box-shadow: 0 8px 20px rgba(131, 84, 218, 0.55); min-width: 180px;">
+                        <div class="small fw-semibold mb-2 text-white">Dividend/acțiune</div>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="display-5 fw-semibold text-white" style="font-size: 2rem;">{{ last_amount }} RON</div>
+                        </div>
+                        {% if DPS_yoy_change is defined and DPS_yoy_change is not none %}
+                        <div class="d-flex align-items-center">
+                            {% if DPS_yoy_change >= 0.01 %}
+                            <div class="d-flex align-items-left px-1 py-1 rounded-sm" style="background-color: var(--bs-success); color: white;">
+                                <i class="la la-arrow-up me-2"></i>
+                                <span class="small fw-semibold">În creștere: +{{ (DPS_yoy_change * 100) | round(1) }}% an/an</span>
+                            </div>
+                            
+                            {% elif DPS_yoy_change <= -0.01 %}
+                            <div class="d-flex align-items-center text-start px-1 py-1 rounded-sm" style="background-color: var(--bs-danger); color: white;">
+                                <i class="la la-arrow-down me-2"></i>
+                                <span class="small fw-semibold">În scădere: {{ (DPS_yoy_change * 100) | round(1) }}% an/an</span>
+                            </div>
+
+                            {% else %}
+                            <div class="d-flex align-items-center px-1 py-1 rounded-sm" style="background-color: var(--bs-dark); color: white;">
+                                <i class="la la-minus me-2"></i>
+                                <span class="small fw-semibold">Staționar: {{ (DPS_yoy_change * 100) | round(1) }}% an/an</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="text-muted small">Variație anuală indisponibilă</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Column 2: Randament Dividend -->
+                <div class="col-md-2 col-sm-6">
+                <div class="text-muted small fw-semibold mb-1">Randament dividend</div>
+                <div class="fs-6 fw-medium">{{ (dividend_yield*100)| round(2)  }}%</div>
+                <div class="text-muted small fw-semibold mt-3">Randament precedent</div>
+                <div class="fs-6">{{ (previous_dividend_yield*100) | round(2) }}%</div>
+                </div>
+
+                <!-- Column 3: Rata distribuire -->
+                <div class="col-md-2 col-sm-6">
+                <div class="text-muted small fw-semibold mb-1">Rată distribuire</div>
+                <div class="fs-6 fw-medium">{{ (payout_ratio*100) | round(0) }}%</div>
+                <div class="text-muted small fw-semibold mt-3">Rată distribuire precedentă</div>
+                <div class="fs-6">{{ (previous_payout_ratio*100) | round(0) }}%</div>
+                </div>
+
+                <!-- Column 4: Data plății -->
+                <div class="col-md-2 col-sm-6">
+                <div class="text-muted small fw-semibold mb-1">Data plății</div>
+                <div class="fs-6 fw-medium">{{ payment_date | ro_date }}</div>
+                <div class="text-muted small fw-semibold mt-3">Ex-date</div>
+                <div class="fs-6">{{ last_ex_date | ro_date }}</div>
+                </div>
+
+                <!-- Column 5: Tip dividend -->
+                <div class="col-md-2 col-sm-6">
+                <div class="text-muted small fw-semibold mb-1">Tip dividend</div>
+                <div class="fs-6 fw-medium">{{ last_type }}</div>
+                <div class="text-muted small fw-semibold mt-3">Frecvență</div>
+                <div class="fs-6">{{ last_frequency }}</div>
+                </div>
+          
+                <!-- Column 6: Shot Clock -->
+                <div class="col-md-2 col-sm-6">
+                    {% if last_ex_date %}
+                    {% set ex_date = last_ex_date | todate %}
+                    {% set today = now().date() %}
+                
+                    {% if ex_date > today %}
+                        {% set days_left = (ex_date - today).days %}
+                        <div class="text-muted small fw-semibold mb-2">Au mai rămas</div>
+                        <div id="dividend-countdown"
+                            data-exdate="{{ last_ex_date }}"
+                            class="py-2 px-3 rounded-sm text-center">
+
+                           <!-- Row of time boxes -->
+                           <div class="d-flex justify-content-center align-items-end gap-1 mb-2">
+                            {% set countdown_color = 'var(--bs-danger)' if days_left <= 3 else 'var(--bs-primary)' %}
+                          
+                                <!-- Box + Label: Days -->
+                                <div class="text-center">
+                                    <div class="rounded-sm px-2 py-2 fs-4 fw-bold" style="background-color: {{ countdown_color }}; color: white;">
+                                        <span id="days">--</span>
+                                    </div>
+                                    <div class="small fw-semibold mt-1" style="color: {{ countdown_color }};">zile</div>
+                                </div>
+                            
+                                <!-- Colon -->
+                                <div class="fs-4 fw-bold d-flex align-items-center" style="color: {{ countdown_color }};">:</div>
+                            
+                                <!-- Hours -->
+                                <div class="text-center">
+                                    <div class="rounded-sm px-2 py-2 fs-4 fw-bold" style="background-color: {{ countdown_color }}; color: white;">
+                                        <span id="hours">--</span>
+                                    </div>
+                                    <div class="small fw-semibold mt-1" style="color: {{ countdown_color }};">ore</div>
+                                </div>
+                            
+                                <div class="fs-4 fw-bold d-flex align-items-center" style="color: {{ countdown_color }};">:</div>
+                            
+                                <!-- Minutes -->
+                                <div class="text-center">
+                                    <div class="rounded-sm px-2 py-2 fs-4 fw-bold" style="background-color: {{ countdown_color }}; color: white;">
+                                        <span id="minutes">--</span>
+                                    </div>
+                                    <div class="small fw-semibold mt-1" style="color: {{ countdown_color }};">min</div>
+                                </div>
+                            
+                                <div class="fs-4 fw-bold d-flex align-items-center" style="color: {{ countdown_color }};">:</div>
+                            
+                                <!-- Seconds -->
+                                <div class="text-center">
+                                    <div class="rounded-sm px-2 py-2 fs-4 fw-bold" style="background-color: {{ countdown_color }}; color: white;">
+                                        <span id="seconds">--</span>
+                                    </div>
+                                <div class="small fw-semibold mt-1" style="color: {{ countdown_color }};">sec</div>
+                                </div>
+                           </div>                          
+                        </div>
+
+                        <div class="small text-muted mt-2">până la ex-date</div>
+
+                    {% elif ex_date == today %}
+                        <div class="alert alert-info fw-semibold text-center">Astăzi este data ex-dividend</div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Card 1 -->
+        <div class="col-md-6 mb-4">
+            <div class="card text-white" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                <div class="card-header" style="height: 50px;">
+                    <h5 class="card-title mb-0">Evolutie dividende</h5>
+                </div>
+                <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                    <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                        <canvas id="dividendsDPSChart" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Card 2 -->
+        <div class="col-md-6 mb-4">
+            <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                <div class="card-header" style="height: 50px;">
+                    <h5 class="card-title text-white">Istoric randament</h5>
+                </div>
+                <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                    <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                        <canvas id="DividendYieldCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <!-- Card 3 -->
+        <div class="col-md-6 mb-4">
+            <div class="card text-white" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                <div class="card-header" style="height: 50px;">
+                    <h5 class="card-title mb-0">Rata de distribuire</h5>
+                </div>
+                <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                    <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                        <canvas id="DividendPayoutCanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Card 4-->
+        <div class="col-md-6 mb-4">
+            <div class="card" style="--bs-card-bg: rgba(94, 62, 208, 0.3); height: 500px;">
+                <div class="card-header" style="height: 50px;">
+                    <h5 class="card-title text-white">Dividende/FCFE</h5>
+                </div>
+                <div class="card-body p-2 d-flex justify-content-center align-items-center" style="height: 350px">
+                    <div class="position-relative w-100 h-100" style="max-width: 100%; overflow: hidden;">
+                        <canvas id="DividendFCFECanvas" class="w-100 h-100" style="max-width: 100%; height: auto;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>   
+</div>         

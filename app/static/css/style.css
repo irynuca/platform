@@ -26813,3 +26813,8 @@ p.tight {
 .table-responsive-container::-webkit-scrollbar-thumb:hover {
   background-color: var(--primary-hover);
 }
+
+#dividend-countdown span {
+  font-size: 1.2rem;
+  color: whitesmoke;
+}
