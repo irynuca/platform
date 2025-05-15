@@ -1,0 +1,115 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Calendar Financiar</title>
+
+    <!-- FullCalendar Styles -->
+    <link href="/static/vendor/fullcalendar/css/main.min.css" rel="stylesheet">
+    <link href="/static/vendor/jquery-nice-select/css/nice-select.css" rel="stylesheet">
+    <link href="/static/vendor/jquery-autocomplete/jquery-ui.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+<div id="main-wrapper">
+    {% include "partials/sidebar.html" %}
+    <div class="content-body">
+        <div class="container-fluid">
+            <div class="card">
+                <div class="card-body">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vendor Scripts -->
+<script src="/static/vendor/global/global.min.js"></script>
+<script src="/static/vendor/moment/moment.min.js"></script>
+<script src="/static/vendor/fullcalendar/js/main.min.js"></script>
+<script src="/static/vendor/jquery-nice-select/js/jquery.nice-select.min.js"></script>
+<script src="/static/vendor/jquery-autocomplete/jquery-ui.js"></script> 
+<script src="/static/js/custom.min.js"></script>
+<script src="/static/js/dlabnav-init.js"></script>
+
+<!-- FullCalendar Initialization -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var calendarEl = document.getElementById('calendar');
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        locale: 'ro',  // Set the locale to Romanian
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,dayGridYear'
+        },
+        views: {
+            dayGridYear: {
+                type: 'dayGrid',
+                duration: { years: 1 },
+                buttonText: 'An'  // Change "Year" to "An"
+            },
+            dayGridMonth: {
+                buttonText: 'Luna'  // Change "Month" to "Luna"
+            },
+            timeGridWeek: {
+                buttonText: 'Saptamana'  // Change "Week" to "Saptamana"
+            },
+            timeGridDay: {
+                buttonText: 'Zi'  // Change "Day" to "Zi"
+            }
+        },
+        initialView: 'dayGridMonth',
+        navLinks: true,
+        nowIndicator: true,
+        editable: false,
+        selectable: false,
+        events: '/calendar/events',
+        eventDidMount: function(info) {
+            let event = info.event;
+            let props = event.extendedProps;
+            let color = "var(--bs-purple)"; // Default color for other categories
+
+            // Apply color based on category and event type
+            if (props.category === "macro") {
+                color = "var(--bs-teal)";
+            } else if (props.category === "company") {
+                switch (props.eventType) {
+                    case "earnings_release":
+                        color = "var(--bs-primary)";
+                        break;
+                    case "earnings_conf_call":
+                        color = "var(--primary-dark)";
+                        break;
+                    case "ex_date":
+                        color = "var(--bs-red)";
+                        break;
+                }
+            }
+
+            // Apply the color
+            info.el.style.backgroundColor = color;
+            info.el.style.borderColor = color;
+            info.el.style.color = "white";
+            info.el.style.whiteSpace = "normal";
+            info.el.style.wordWrap = "break-word";
+            info.el.style.padding = "4px 6px";
+            info.el.style.borderRadius = "4px";
+            info.el.style.lineHeight = "1.2";
+        }
+    });
+
+    calendar.render();
+});
+</script>
+
+
+
+
+</body>
+</html>

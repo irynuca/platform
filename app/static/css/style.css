@@ -26818,3 +26818,12 @@ p.tight {
   font-size: 1.2rem;
   color: whitesmoke;
 }
+
+
+.fc-event {
+    white-space: normal !important;
+    word-wrap: break-word !important;
+    padding: 4px 6px !important;
+    line-height: 1.2 !important;
+    border-radius: 4px !important;
+}

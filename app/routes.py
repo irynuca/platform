@@ -3,18 +3,18 @@ from .data_handler import (get_stock_overview, get_historical_stock_data, get_fi
                            get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data, get_revenue_qtl_and_change_data, 
                            get_operating_profit_qtl_and_margin_data, get_net_profit_qtl_and_margin_data, get_chart_comment, 
                            get_revenue_annual_and_change_data, get_dividends, get_dividends_dps_and_growth, get_dividend_yield_history,
-                           get_payout_ratio_history, get_dividends_to_fcfe_history)
+                           get_payout_ratio_history, get_dividends_to_fcfe_history, get_calendar_events)
 import json
 
 main = Blueprint('main', __name__)
 
 # List of tickers
-tickers = ["AAG","ALR","ALT","ALU","AQ","ARM","AROBS","ARS","ARTE","ATB","BCM","BIO","BNET","BRD","BRK","BRM","BVB","CAOR","CBC","CMCM","CMF","CMP","CNTE","COMI","COTE","CRC","DIGI","EBS","ECT","EFO","EL","ELGS","ELJ","ELMA","ENP","EVER","FP","GREEN","H2O","IARV","IMP","INFINITY","LION","LONG","M","MCAB","MECE","MECF","NAPO","OIL","ONE","PBK","PE","PPL","PREB","PREH","PTR","RMAH","ROC1","ROCE","RPH","RRC","SAFE","SCD","SFG","SMTL","SNG","SNN","SNO","SNP","SOCP","STZ","TBK","TBM","TEL","TGN","TLV","TRANSI","TRP","TTS","TUFE","UAM","UCM","UZT","VESY","VNC","WINE","2P","4RT","AAB","ABN","ADISS","ADMY","ADS","AG","AGCM","ALB","ALCQ","ALDANI","ALRV","ALV","ALW","AMAL","ANIM","ANTA","APP","ARAX","ARCU","ARCV","ARJI","ARMT","ARO","ASC","ASP","AST","ATRD","AUXI","AVIO","AVSL","BADE","BALN","BAYAN","BBGA","BENTO","BIBU","BIOW","BLEA","BMW","BNAT","BONA","BRCR","BRNA","BUCS","BUCU","BUCV","CAB","CACU","CAIN","CBKN","CBOT","CC","CCOM","CEPO","CFED","CHIA","CHRD","CICE","CICO","CLAIM","CLUB","CMBU","CMIL","CMVX","COBL","COBU","COCB","COCR","CODE","COEC","COET","COKG","COKJ","COLK","COMY","CONK","CORO","COTM","COTN","COUT","COVB","CPHA","CPLB","CRMC","CRPC","CTT","CTUL","DAI","DBK","DENT","DIAS","DN","DOIS","DPW","DTE","DTG","DUPX","EEAI","ELCT","ELEL","ELER","ELJA","ELRD","ELV","ELZY","EMAI","EMTL","EOAN","EPN","FACY","FAMZ","FEP","FERO","FIMA","FLAO","FMAR","FOJE","FOMA","FOSB","FRB","GALF","GAOY","GDP","GGC","GHIM","GRIU","GROB","GSH","HAI","HEAL","HLEB","HUNT","IAMU","IANY","IASX","ICEV","ICMA","ICSH","IMMO","INCT","INMA","INOX","INSI","INTA","IORB","IPHI","IPRO","IPRU","IUBR","JTG","LCSI","LHA","LIH","LITO","MACO","MALI","MAM","MAMA","MEBY","MECA","MECP","MELE","MEOR","MEOY","MESA","MET","METT","METY","MIB","MILK","MINO","MINX","MOBD","MOBE","MOBG","MOBT","MODY","MOIB","MORA","MRDO","NAXY","NCHI","NEOL","NORD","NRF","NTEX","NUIA","OMAL","OMSE","PACY","PCTM","PELA","PETY","POBR","POTI","PPLI","PRAE","PRBU","PRDI","PRIB","PRIN","PRSN","PVBS","RANT","RCHI","REFE","REIT","RELE","REMM","REVA","RKOT","ROOF","RORX","RRD","SAP","SATU","SCBC","SCDM","SEBZ","SECE","SEOL","SEOM","SERC","SEVE","SIDG","SIEP","SIEP","SIFI","SIGS","SINA","SINT","SIRJ","SLBB","SNC","SOMR","SOPL","SOTA","SPTU","SPX","STKP","STNM","STOF","STOZ","TALD","TERA","TIGH","TRCS","TRGI","TRNG","TRSB","TRSK","TRVM","TSLA","TSND","TUAA","UARG","UCET","UNIR","UNISEM","UNVR","UPET","UPRR","URBA","URCB","UTGR","UZC","UZIN","VAC","VIAG","VIRO","VITK"]
+tickers = ["AQ"]
 
 # Home page with search bar and dropdown
 @main.route('/')
 def home():
-    return render_template("home.html", tickers=tickers)  # ✅ Pass tickers to HTML
+    return render_template("home.html", tickers=tickers)
 
 # Handling search form submission (GET)
 @main.route('/analyze', methods=['GET'])
@@ -182,6 +182,12 @@ def dividends_to_fcfe_history(ticker):
     return jsonify(data)
 
 
-@main.route("/app-calender.html")
-def calender():
-    return render_template("app-calender.html", tickers=tickers)
+@main.route("/calendar")
+def calendar_page():
+    return render_template("calendar.html")
+
+
+@main.route("/calendar/events")
+def calendar_events():
+    events = get_calendar_events()
+    return jsonify(events)

@@ -31,6 +31,7 @@ from data_handler import (
     get_dividend_yield_history,
     get_payout_ratio_history,
     get_dividends_to_fcfe_history,
+    get_calendar_events
 )
 
 # ---------------- TEST FUNCTIONS ---------------- #
@@ -127,6 +128,11 @@ def test_get_dividends_to_fcfe_history(ticker):
     print(get_dividends_to_fcfe_history(ticker))
     print()
 
+def test_get_calendar_events(ticker=None):
+    print("➡️ Testing calendar events")
+    print(get_calendar_events())
+    print()
+
 # ---------------- RUNNER ---------------- #
 
 test_functions = {
@@ -147,7 +153,8 @@ test_functions = {
     "15": test_get_dividends_dps_and_growth,
     "16": test_get_dividend_yield_history,
     "17": test_get_payout_ratio_history,
-    "18": test_get_dividends_to_fcfe_history
+    "18": test_get_dividends_to_fcfe_history,
+    "19": test_get_calendar_events
 }
 
 def main():

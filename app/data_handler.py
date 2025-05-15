@@ -939,3 +939,62 @@ def get_dividends_to_fcfe_history(ticker):
         grouped[row["DPS_year"]] += row["dividends_to_fcfe"] or 0
 
     return [{"year": year, "dividends_to_fcfe": val} for year, val in sorted(grouped.items())]
+
+def get_calendar_events():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT
+            fe.id,
+            fe.event_date,
+            fe.title AS raw_title,
+            fe.period_reference,
+            fe.event_type,
+            fe.category,
+            fe.company_ticker,
+            c.company_name
+        FROM financial_events fe
+        LEFT JOIN companies c
+          ON UPPER(TRIM(fe.company_ticker)) = UPPER(TRIM(c.company_ticker))
+        ORDER BY fe.event_date
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+
+    events = []
+    for r in rows:
+        ticker = (r["company_ticker"] or "").strip().upper()
+        company = r["company_name"]
+        raw_title = (r["raw_title"] or "").strip()
+        raw_title = re.sub(r"[–\-\s]+$", "", raw_title)
+        period = (r["period_reference"] or "").strip()
+
+        # Handle title formatting based on category
+        if r["category"] == "company":
+            # Format: Company (TICKER) – Event Title – Period
+            if ticker and period:
+                title = f"{company} ({ticker}) – {raw_title} – {period}"
+            elif ticker:
+                title = f"{company} ({ticker}) – {raw_title}"
+            else:
+                title = f"{raw_title} – {period}" if period else raw_title
+        elif r["category"] == "macro":
+            # Format: Event Title – Period
+            title = f"{raw_title} – {period}" if period else raw_title
+
+        events.append({
+            "id": r["id"],
+            "title": title,
+            "start": r["event_date"],
+            "extendedProps": {
+                "ticker": ticker,
+                "company": company,
+                "period": period,
+                "eventType": r["event_type"],
+                "category": r["category"]
+            }
+        })
+
+    return events
