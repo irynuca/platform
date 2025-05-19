@@ -1,0 +1,325 @@
+import os
+import re
+import sqlite3
+from datetime import datetime
+from sentence_transformers import SentenceTransformer, util
+from transformers import AutoTokenizer, AutoModel
+import torch
+import numpy as np
+import pandas as pd
+import calendar
+import unicodedata
+from openpyxl import load_workbook
+from rapidfuzz import fuzz, process
+
+# --- CONFIG ---
+DB_PATH = r"C:\Irina\Mosaiq8\app\data\financials.db"
+BASE_DIR_TEMPLATE = r"C:\Users\irina\Project Element\Data source\{ticker}\{ticker}_raw\{ticker}_clean_tables"
+
+tokenizer = AutoTokenizer.from_pretrained("ProsusAI/finbert")
+model = AutoModel.from_pretrained("ProsusAI/finbert")
+
+def finbert_find_best_match(raw_name, existing_metrics, threshold=0.8):
+    inputs = tokenizer([raw_name] + existing_metrics, padding=True, truncation=True, return_tensors="pt")
+    embeddings = model(**inputs).last_hidden_state.mean(dim=1).detach().numpy()
+    raw_name_embedding = embeddings[0]
+    existing_embeddings = embeddings[1:]
+
+    # Calculate cosine similarities
+    similarities = np.dot(existing_embeddings, raw_name_embedding) / (
+        np.linalg.norm(existing_embeddings, axis=1) * np.linalg.norm(raw_name_embedding)
+    )
+    max_index = np.argmax(similarities)
+    max_score = similarities[max_index]
+
+    if max_score >= threshold:
+        return existing_metrics[max_index], max_score
+    return None, max_score
+
+def get_user_inputs():
+    ticker = input("Enter the company ticker (e.g., AQ): ").strip().upper()
+    statement_name = input("Enter the statement type (CF, BS, PL): ").strip().upper()
+    
+    # Validate statement name
+    valid_statements = ["CF", "BS", "PL"]
+    if statement_name not in valid_statements:
+        print(f"Invalid statement type '{statement_name}'. Please choose from: {', '.join(valid_statements)}")
+        exit(1)
+    
+    # Generate the input directory based on the ticker
+    input_dir = BASE_DIR_TEMPLATE.format(ticker=ticker)
+
+    if not os.path.exists(input_dir):
+        print(f"Directory not found: {input_dir}")
+        exit(1)
+
+    print(f"📂 Using input directory: {input_dir}")
+    return ticker, statement_name, input_dir
+
+def remove_diacritics(text):
+    replacements = {
+        'ă': 'a', 'â': 'a', 'î': 'i', 'ș': 's', 'ş': 's', 'ț': 't', 'ţ': 't',
+        'Ă': 'A', 'Â': 'A', 'Î': 'I', 'Ș': 'S', 'Ş': 'S', 'Ț': 'T', 'Ţ': 'T'
+    }
+    return ''.join(replacements.get(c, c) for c in text)
+
+
+# In-memory storage for known metrics
+metric_names = {}
+def clean_metric_name(text):
+    # Remove diacritics if needed
+    text = text.strip().lower()
+    return text
+
+def ai_find_or_insert_metric(raw_name, threshold=0.98):
+    # Clean the raw name
+    cleaned_name = clean_metric_name(raw_name)
+    
+    # Check if this metric already exists in memory
+    if cleaned_name in metric_names:
+        return metric_names[cleaned_name]
+
+    # If not, find the closest existing match
+    if metric_names:
+        existing = list(metric_names.values())
+        match, score = finbert_find_best_match(cleaned_name, existing, threshold)
+        if match:
+            print(f"✅ AI Matched '{raw_name}' to '{match}' (score={score:.2f})")
+            metric_names[cleaned_name] = match
+            return match
+
+    # If no match is found, add as a new metric
+    print(f"🆕 New metric detected by AI: '{raw_name}' → inserted as '{cleaned_name}'")
+    metric_names[cleaned_name] = cleaned_name
+    return cleaned_name
+
+
+
+
+
+
+def get_metric_parent(conn, metric_name_ro):
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT metric_parent FROM financial_metrics WHERE metric_name_ro = ?
+    """, (metric_name_ro,))
+    result = cursor.fetchone()
+    return result[0] if result else None
+
+ro_months = {
+    "ianuarie": "jan", "ian": "jan", "februarie": "feb", "feb": "feb",
+    "martie": "mar", "mar": "mar", "aprilie": "apr", "apr": "apr", "mai": "may",
+    "iunie": "jun", "iun": "jun", "iulie": "jul", "iul": "jul", "august": "aug", "aug": "aug",
+    "septembrie": "sep", "sept": "sep", "sep": "sep", "octombrie": "oct", "oct": "oct",
+    "noiembrie": "nov", "noi": "nov", "decembrie": "dec", "dec": "dec"
+}
+
+def normalize_period_string(date_str):
+    if isinstance(date_str, datetime):
+        return date_str.strftime("%d/%m/%Y")
+    
+    if not isinstance(date_str, str):
+        return None
+    
+    # Handle common English date separators
+    date_str = re.sub(r"[./\s]+", "-", date_str.strip().lower())
+    
+    # Try different English date formats
+    formats = ["%d-%b-%Y", "%d-%b-%y", "%d-%m-%Y", "%d-%m-%y", "%Y-%m-%d", "%Y-%d-%m", "%b-%d-%Y", "%b-%d-%y"]
+    for fmt in formats:
+        try:
+            dt = datetime.strptime(date_str, fmt)
+            return dt.strftime("%d/%m/%Y")
+        except ValueError:
+            continue
+    
+    # Return None if no valid format is found
+    return None
+
+
+def extract_date_from_filename(filename):
+    # Example: AQ_conso_ro_31.12.2021.xlsx → 31.12.2021
+    match = re.search(r"(\d{2})[.\-](\d{2})[.\-](\d{4})", filename)
+    if match:
+        try:
+            return datetime.strptime(match.group(0), "%d.%m.%Y")
+        except ValueError:
+            pass
+    return datetime.min  # fallback for bad formats
+
+def parse_value(cell):
+    """Convert cell to float, treating placeholders like '–', '.' or '' as 0."""
+    if pd.isna(cell):
+        return None
+    if isinstance(cell, str):
+        cleaned = cell.strip().replace(",", "").replace("–", "").replace("−", "-")
+        if cleaned in ["", ".", "-"]:
+            return 0.0
+        try:
+            return float(cleaned)
+        except ValueError:
+            return None
+    try:
+        return float(cell)
+    except (ValueError, TypeError):
+        return None
+
+
+
+def extract_data_to_list(filepath, statement_name):
+    filename = os.path.basename(filepath)
+    company_ticker = filename.split("_")[0]
+
+    print(f"\n📄 Processing file: {filename}")
+
+    wb = load_workbook(filepath, data_only=True)
+    all_records = []
+
+    for sheetname in wb.sheetnames:
+        if not re.match(rf"{statement_name}_\d{{8}}", sheetname):
+            continue
+
+        print(f"🔍 Reading sheet: {sheetname}")
+        df = pd.read_excel(filepath, sheet_name=sheetname)
+        df.columns = [normalize_period_string(col) for col in df.columns]
+
+        for idx, row in df.iterrows():
+            raw_metric = str(row.iloc[0]).strip()
+            normalized_metric = ai_find_or_insert_metric(raw_metric)
+
+            # Skip invalid rows
+            val1, val2 = row.iloc[1], row.iloc[2]
+            if (pd.isna(val1) or val1 == '') and (pd.isna(val2) or val2 == ''):
+                continue
+            val1 = parse_value(row.iloc[1])
+            val2 = parse_value(row.iloc[2])
+
+            if val1 is None and val2 is None:
+                print(f"⚠️ Skipping non-numeric row at line {idx+2}: '{raw_metric}'")
+                continue
+
+            col_data = [
+                (df.columns[1], val1),
+                (df.columns[2], val2)
+            ]
+
+            for period_label, value in col_data:
+                if value is None or not period_label:
+                    continue
+
+                period_label_norm = normalize_period_string(period_label)
+                if not period_label_norm:
+                    continue
+
+                try:
+                    period_end = datetime.strptime(period_label_norm, "%d/%m/%Y")
+                except ValueError:
+                    print(f"⚠️ Invalid period: '{period_label}'")
+                    continue
+
+                record = {
+                    "company_ticker": company_ticker,
+                    "statement_name": statement_name,
+                    "metric_name_ro": normalized_metric,
+                    "period_end": period_end.strftime("%Y-%m-%d"),
+                    "value": value
+                }
+                all_records.append(record)
+
+        print(f"✅ Finished sheet: {sheetname}")
+
+    return all_records
+
+
+
+
+def process_all_excels(directory, conn):
+    excel_files = [
+        os.path.join(directory, f)
+        for f in os.listdir(directory)
+        if f.endswith(".xlsx")
+    ]
+
+    sorted_files = sorted(excel_files, key=extract_date_from_filename)
+
+    for file_path in sorted_files:
+        extract_data_to_list(file_path, conn)
+
+def export_cashflow_series_to_excel(conn, output_path="cashflow_series.xlsx"):
+    print("📊 Exporting cash flow series to Excel...")
+
+    query = """
+    SELECT 
+        company_ticker,
+        period_end,
+        metric_name_ro,
+        value,
+        line_order
+    FROM cashflow_staging
+    ORDER BY line_order ASC, metric_name_ro, period_end
+    """
+
+    df = pd.read_sql_query(query, conn)
+
+    if df.empty:
+        print("⚠️ No data found in cashflow_staging.")
+        return
+
+    # Maintain line order
+    df["metric_name_ro"] = pd.Categorical(df["metric_name_ro"], 
+                                          categories=df.sort_values("line_order")["metric_name_ro"].unique(),
+                                          ordered=True)
+
+    pivot_df = df.pivot_table(
+        index="metric_name_ro",
+        columns="period_end",
+        values="value",
+        aggfunc="first"
+    )
+
+    # Format period columns
+    pivot_df.columns = pd.to_datetime(pivot_df.columns).strftime('%d-%m-%Y')
+    pivot_df = pivot_df[sorted(pivot_df.columns, key=lambda x: pd.to_datetime(x, dayfirst=True))]
+
+    # Save to Excel
+    excel_path = os.path.join(os.getcwd(), output_path)
+    pivot_df.to_excel(excel_path)
+    print(f"✅ Cash flow series exported to {excel_path}")
+
+
+if __name__ == "__main__":
+    # Get user inputs
+    ticker, statement_name, input_dir = get_user_inputs()
+
+    # Process files
+    all_records = []
+    excel_files = [
+        os.path.join(input_dir, f)
+        for f in os.listdir(input_dir)
+        if f.endswith(".xlsx")
+    ]
+
+    sorted_files = sorted(excel_files, key=extract_date_from_filename)
+
+    for file_path in sorted_files:
+        records = extract_data_to_list(file_path, statement_name)
+        all_records.extend(records)
+
+    # Export to Excel
+    df_export = pd.DataFrame(all_records)
+    if not df_export.empty:
+        pivot_df = df_export.pivot_table(
+            index="metric_name_ro",
+            columns="period_end",
+            values="value",
+            aggfunc="first"
+        )
+        pivot_df.columns = pd.to_datetime(pivot_df.columns).strftime('%d-%m-%Y')
+        pivot_df = pivot_df[sorted(pivot_df.columns, key=lambda x: pd.to_datetime(x, dayfirst=True))]
+        output_file = f"{ticker}_{statement_name}_extracted.xlsx"
+        pivot_df.to_excel(output_file)
+        print(f"✅ All data exported to {output_file}")
+    else:
+        print("⚠️ No valid data found in the input directory.")
+
+    print("✅ Done: All data processed and exported.")

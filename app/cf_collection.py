@@ -1,268 +1,202 @@
 import os
 import re
-import sqlite3
-from datetime import datetime
-
+import json
 import pandas as pd
-import unicodedata
+from datetime import datetime
 from openpyxl import load_workbook
 from rapidfuzz import fuzz, process
 
 # --- CONFIG ---
-INPUT_DIR = r"C:\Users\irina\Project Element\Data source\AQ\AQ_raw\AQ_clean_tables"
 DB_PATH = r"C:\Irina\Mosaiq8\app\data\financials.db"
+BASE_DIR_TEMPLATE = r"C:\Users\irina\Project Element\Data source\{ticker}\{ticker}_raw\{ticker}_clean_tables"
+GLOBAL_MATCHING_THRESHOLD = 95
+METRIC_MAPPING_FILE = "metric_mapping.json"
+
+# --- UTILITIES ---
+
+def get_user_inputs():
+    ticker = input("Enter the company ticker (e.g., AQ): ").strip().upper()
+    statement = input("Enter the statement type (CF, BS, PL): ").strip().upper()
+    if statement not in ["CF", "BS", "PL"]:
+        print(f"Invalid statement '{statement}'. Choose CF, BS, or PL.")
+        exit(1)
+    input_dir = BASE_DIR_TEMPLATE.format(ticker=ticker)
+    if not os.path.isdir(input_dir):
+        print(f"Directory not found: {input_dir}")
+        exit(1)
+    print(f"📂 Using input directory: {input_dir}")
+    return ticker, statement, input_dir
+
 
 def remove_diacritics(text):
-    replacements = {
-        'ă': 'a', 'â': 'a', 'î': 'i', 'ș': 's', 'ş': 's', 'ț': 't', 'ţ': 't',
-        'Ă': 'A', 'Â': 'A', 'Î': 'I', 'Ș': 'S', 'Ş': 'S', 'Ț': 'T', 'Ţ': 'T'
-    }
-    return ''.join(replacements.get(c, c) for c in text)
+    mapping = {'ă':'a','â':'a','î':'i','ș':'s','ş':'s','ț':'t','ţ':'t',
+               'Ă':'A','Â':'A','Î':'I','Ș':'S','Ş':'S','Ț':'T','Ţ':'T'}
+    return ''.join(mapping.get(c, c) for c in text)
 
 
-def load_metrics_from_db(conn):
-    df = pd.read_sql_query("SELECT metric_name_ro FROM financial_metrics", conn)
-    return df["metric_name_ro"].tolist()
+def clean_metric_name(raw):
+    no_diac = remove_diacritics(raw.strip().lower())
+    return re.sub(r'[^a-z0-9 ]+', '', no_diac)
 
 
-def fuzzy_find_or_insert_metric(conn, raw_name, ticker, threshold=90):
-    cleaned_name = remove_diacritics(raw_name.strip())
-    cleaned_name_lower = cleaned_name.lower()
-    
-    existing = load_metrics_from_db(conn)
-    match, score, _ = process.extractOne(cleaned_name_lower, existing, scorer=fuzz.token_sort_ratio)
+def is_valid_line(metric, vals):
+    if not metric.strip():
+        return False
+    for v in vals:
+        if pd.notna(v) and str(v).strip() not in ['', '-', '0', '0.0', 'nan']:
+            return True
+    return False
 
-    if score >= threshold:
-        print(f"✅ Matched '{raw_name}' to '{match}' (score={score})")
-        return match
-
-    print(f"🆕 New metric detected: '{raw_name}' → inserted as '{cleaned_name}' for ticker '{ticker}'")
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO financial_metrics (metric_name_ro, company_ticker)
-        VALUES (?, ?)
-    """, (cleaned_name, ticker))
-    conn.commit()
-
-    return cleaned_name
+# --- MAPPING ---
+metric_mapping = {}
 
 
+def load_metric_mappings():
+    if os.path.exists(METRIC_MAPPING_FILE):
+        print("🔄 Loading existing metric mappings...")
+        return json.load(open(METRIC_MAPPING_FILE, 'r', encoding='utf-8'))
+    print("⚠️ Mapping file not found, creating new.")
+    json.dump({}, open(METRIC_MAPPING_FILE,'w',encoding='utf-8'), ensure_ascii=False, indent=4)
+    return {}
 
 
-def get_metric_parent(conn, metric_name_ro):
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT metric_parent FROM financial_metrics WHERE metric_name_ro = ?
-    """, (metric_name_ro,))
-    result = cursor.fetchone()
-    return result[0] if result else None
+def save_metric_mappings():
+    json.dump(metric_mapping, open(METRIC_MAPPING_FILE,'w',encoding='utf-8'), ensure_ascii=False, indent=4)
 
+
+def fuzzy_find_or_insert_metric(raw_name, values, interactive=True, threshold=GLOBAL_MATCHING_THRESHOLD):
+    if not is_valid_line(raw_name, values):
+        print(f"⚠️ Skipping invalid line: '{raw_name}' with values {values}")
+        return None
+    cleaned = clean_metric_name(raw_name)
+    # if known
+    if cleaned in metric_mapping:
+        return metric_mapping[cleaned]
+    # first file: seed silently
+    if not interactive:
+        metric_mapping[cleaned] = cleaned
+        return cleaned
+    # try fuzzy match
+    existing = list(metric_mapping.values())
+    if existing:
+        match, score, _ = process.extractOne(cleaned, existing, scorer=fuzz.token_sort_ratio)
+        if score >= threshold:
+            ans = input(f"\n🆕 New metric '{raw_name}'. Replace with '{match}'? (y/n): ").strip().lower()
+            if ans == 'y':
+                metric_mapping[cleaned] = match
+                save_metric_mappings()
+                return match
+    # no auto-match
+    ans = input(f"\n🆕 Metric '{raw_name}' new. Add as new (y) or match existing (n)? ").strip().lower()
+    if ans == 'y':
+        metric_mapping[cleaned] = cleaned
+        save_metric_mappings()
+        return cleaned
+    # propose all matches
+    possible = process.extract(cleaned, existing, scorer=fuzz.token_sort_ratio, limit=len(existing))
+    print("\n🔄 Possible Matches:")
+    for i, (m, s, _) in enumerate(possible, 1):
+        print(f"{i}. {m} (score={s})")
+    while True:
+        choice = input("Choose number or enter new name: ").strip()
+        if choice.isdigit() and 1 <= int(choice) <= len(possible):
+            sel = possible[int(choice)-1][0]
+            metric_mapping[cleaned] = sel
+            save_metric_mappings()
+            return sel
+        if choice:
+            metric_mapping[cleaned] = choice
+            save_metric_mappings()
+            return choice
+        print("Invalid choice.")
+
+# --- DATE ---
 ro_months = {
-    "ianuarie": "jan", "ian": "jan", "februarie": "feb", "feb": "feb",
-    "martie": "mar", "mar": "mar", "aprilie": "apr", "apr": "apr", "mai": "may",
-    "iunie": "jun", "iun": "jun", "iulie": "jul", "iul": "jul", "august": "aug", "aug": "aug",
-    "septembrie": "sep", "sept": "sep", "sep": "sep", "octombrie": "oct", "oct": "oct",
-    "noiembrie": "nov", "noi": "nov", "decembrie": "dec", "dec": "dec"
+    'ianuarie':'jan','ian':'jan','februarie':'feb','feb':'feb',
+    'martie':'mar','mar':'mar','aprilie':'apr','apr':'apr','mai':'may',
+    'iunie':'jun','iun':'jun','iulie':'jul','iul':'jul','august':'aug','aug':'aug',
+    'septembrie':'sep','sept':'sep','sep':'sep','octombrie':'oct','oct':'oct',
+    'noiembrie':'nov','noi':'nov','decembrie':'dec','dec':'dec'
 }
 
-def normalize_period_string(date_str):
-    if isinstance(date_str, datetime):
-        return date_str.strftime("%d/%m/%Y")
-    if not isinstance(date_str, str):
+
+def normalize_period_string(ds):
+    if isinstance(ds, datetime):
+        return ds.strftime('%d/%m/%Y')
+    if not isinstance(ds, str):
         return None
-    date_str = re.sub(r"[./\s]+", "-", date_str.strip().lower())
-    for ro, en in ro_months.items():
-        date_str = re.sub(rf"\b{ro}\b", en, date_str)
-    formats = ["%d-%b-%Y", "%d-%b-%y", "%d-%m-%Y", "%d-%m-%y", "%d-%B-%Y", "%d-%B-%y"]
+    s = re.sub(r'[./\s]+','-', ds.strip().lower())
+    for ro,en in ro_months.items(): s = re.sub(rf"\b{ro}\b", en, s)
+    formats = ['%d-%b-%Y','%d-%b-%y','%d-%m-%Y','%d-%m-%y','%Y-%m-%d','%b-%d-%Y','%d-%B-%Y','%d/%m/%Y','%d.%m.%Y']
     for fmt in formats:
         try:
-            dt = datetime.strptime(date_str, fmt)
-            return dt.strftime("%d/%m/%Y")
-        except ValueError:
+            return datetime.strptime(s, fmt).strftime('%d/%m/%Y')
+        except:
             continue
-    return None  # safer than returning invalid string
+    print(f"⚠️ Could not parse date: '{ds}'")
+    return None
 
-def extract_date_from_filename(filename):
-    # Example: AQ_conso_ro_31.12.2021.xlsx → 31.12.2021
-    match = re.search(r"(\d{2})[.\-](\d{2})[.\-](\d{4})", filename)
-    if match:
+
+def extract_date_from_filename(fn):
+    m = re.search(r'(\d{2})[.\-](\d{2})[.\-](\d{4})', fn)
+    if m:
         try:
-            return datetime.strptime(match.group(0), "%d.%m.%Y")
-        except ValueError:
+            return datetime.strptime(m.group(0), '%d.%m.%Y')
+        except:
             pass
-    return datetime.min  # fallback for bad formats
-
-def parse_value(cell):
-    """Convert cell to float, treating placeholders like '–', '.' or '' as 0."""
-    if pd.isna(cell):
-        return None
-    if isinstance(cell, str):
-        cleaned = cell.strip().replace("–", "").replace(",", ".").replace("−", "-")
-        if cleaned in ["", ".", "-"]:
-            return 0.0
-        try:
-            return float(cleaned)
-        except ValueError:
-            return None
-    try:
-        return float(cell)
-    except (ValueError, TypeError):
-        return None
+    return datetime.min
 
 
-def extract_cf_with_fuzzy_metrics(filepath, conn):
-    filename = os.path.basename(filepath)
-    company_ticker = filename.split("_")[0]
-    statement_type = "consolidated"
-    statement_name = "CashFlow"
+def parse_value(c):
+    if pd.isna(c): return None
+    if isinstance(c,str):
+        cl = c.strip().replace(',', '').replace('–','').replace('−','-')
+        if cl in ['','.','-']: return 0.0
+        try: return float(cl)
+        except: return None
+    try: return float(c)
+    except: return None
 
-    print(f"\n📄 Processing file: {filename}")
+# --- EXTRACT ---
+def extract_data_to_list(fp, stmt, interactive=True):
+    wb = load_workbook(fp, data_only=True)
+    records = []
+    for sh in wb.sheetnames:
+        if not re.match(rf"{stmt}_\d{{8}}", sh): continue
+        df = pd.read_excel(fp, sheet_name=sh)
+        df.columns = [df.columns[0]] + [normalize_period_string(c) for c in df.columns[1:]]
+        for idx,row in df.iterrows():
+            raw = str(row.iloc[0])
+            vals = [row.iloc[1], row.iloc[2]]
+            norm = fuzzy_find_or_insert_metric(raw, vals, interactive)
+            if not norm: continue
+            for col,val in zip(df.columns[1:], vals):
+                if pd.isna(val): continue
+                dnorm = normalize_period_string(col)
+                if not dnorm: continue
+                records.append({'metric_name_ro':norm,'period_end':dnorm,'value':parse_value(val)})
+    return records
 
-    wb = load_workbook(filepath, data_only=True)
-    for sheetname in wb.sheetnames:
-        if not re.match(r"CF_\d{8}", sheetname):
-            continue
-
-        print(f"🔍 Reading sheet: {sheetname}")
-        df = pd.read_excel(filepath, sheet_name=sheetname)
-        df.columns = [normalize_period_string(col) for col in df.columns]
-
-        for idx, row in df.iterrows():
-            raw_metric = str(row.iloc[0]).strip()
-            cleaned_metric = remove_diacritics(raw_metric)
-            
-            # Skip invalid rows
-            val1, val2 = row.iloc[1], row.iloc[2]
-            if (pd.isna(val1) or val1 == '') and (pd.isna(val2) or val2 == ''):
-                continue
-            val1 = parse_value(row.iloc[1])
-            val2 = parse_value(row.iloc[2])
-
-            # Skip if still both are None (e.g., completely invalid row)
-            if val1 is None and val2 is None:
-                print(f"⚠️ Skipping non-numeric row at line {idx+2}: '{raw_metric}'")
-                continue
-
-            matched_metric = fuzzy_find_or_insert_metric(conn, cleaned_metric, company_ticker)
-            print(f"🧼 Cleaned metric: '{raw_metric}' → '{cleaned_metric}' → using: '{matched_metric}'")
-
-            col_data = [
-                (df.columns[1], val1),
-                (df.columns[2], val2)
-            ]
-
-            for period_label, value in col_data:
-                if value is None or not period_label:
-                    continue
-
-                period_label_norm = normalize_period_string(period_label)
-                if not period_label_norm:
-                    continue
-
-                try:
-                    period_end = datetime.strptime(period_label_norm, "%d/%m/%Y")
-                except ValueError:
-                    print(f"⚠️ Invalid period: '{period_label}'")
-                    continue
-
-                period_start = datetime(period_end.year, 1, 1)
-                this_period_type = "annual" if period_label_norm.startswith("31/12") else "quarter"
-
-                print(f"➡️ Line {idx+2}: {matched_metric} = {value} on {period_label_norm}")
-
-                record = {
-                    "company_ticker": company_ticker,
-                    "statement_name": statement_name,
-                    "statement_type": statement_type,
-                    "period_start": period_start.strftime("%Y-%m-%d"),
-                    "period_end": period_end.strftime("%Y-%m-%d"),
-                    "period_type": this_period_type,
-                    "aggr_type": "cml",
-                    "currency": "RON",
-                    "metric_name_ro": matched_metric,
-                    "value": value,
-                    "metric_parent": None,
-                    "line_order": idx + 1,
-                    "last_updated": datetime.now().strftime("%Y-%m-%d")
-                }
-
-                placeholders = ", ".join(record.keys())
-                values = tuple(record.values())
-                sql = f"""
-                    INSERT OR REPLACE INTO cashflow_staging ({placeholders})
-                    VALUES ({','.join(['?'] * len(record))})
-                """
-                conn.execute(sql, values)
-
-        conn.commit()
-        print(f"✅ Finished sheet: {sheetname}")
-
-
-def process_all_excels(directory, conn):
-    excel_files = [
-        os.path.join(directory, f)
-        for f in os.listdir(directory)
-        if f.endswith(".xlsx")
-    ]
-
-    sorted_files = sorted(excel_files, key=extract_date_from_filename)
-
-    for file_path in sorted_files:
-        extract_cf_with_fuzzy_metrics(file_path, conn)
-
-def export_cashflow_series_to_excel(conn, output_path="cashflow_series.xlsx"):
-    print("📊 Exporting cash flow series to Excel...")
-
-    query = """
-    SELECT 
-        company_ticker,
-        period_end,
-        metric_name_ro,
-        value,
-        line_order
-    FROM cashflow_staging
-    ORDER BY line_order ASC, metric_name_ro, period_end
-    """
-
-    df = pd.read_sql_query(query, conn)
-
-    if df.empty:
-        print("⚠️ No data found in cashflow_staging.")
-        return
-
-    # Maintain line order
-    df["metric_name_ro"] = pd.Categorical(df["metric_name_ro"], 
-                                          categories=df.sort_values("line_order")["metric_name_ro"].unique(),
-                                          ordered=True)
-
-    pivot_df = df.pivot_table(
-        index="metric_name_ro",
-        columns="period_end",
-        values="value",
-        aggfunc="first"
-    )
-
-    # Format period columns
-    pivot_df.columns = pd.to_datetime(pivot_df.columns).strftime('%d-%m-%Y')
-    pivot_df = pivot_df[sorted(pivot_df.columns, key=lambda x: pd.to_datetime(x, dayfirst=True))]
-
-    # Save to Excel
-    excel_path = os.path.join(os.getcwd(), output_path)
-    pivot_df.to_excel(excel_path)
-    print(f"✅ Cash flow series exported to {excel_path}")
-
-
-def init_db(db_path):
-    conn = sqlite3.connect(db_path)
-    return conn
-
-# --- Run ---
-if __name__ == "__main__":
-    print("🚀 Starting cash flow data extraction...")
-    conn = init_db(DB_PATH)
-    try:
-        process_all_excels(INPUT_DIR, conn)
-        export_cashflow_series_to_excel(conn)
-    finally:
-        conn.close()
-    print("✅ Done: All CF data processed and exported.")
+# --- MAIN ---
+if __name__ == '__main__':
+    ticker, stmt, inp = get_user_inputs()
+    metric_mapping.clear()
+    metric_mapping.update(load_metric_mappings())
+    all_records = []
+    files = sorted([os.path.join(inp,f) for f in os.listdir(inp) if f.endswith('.xlsx')], key=extract_date_from_filename)
+    for i,fp in enumerate(files):
+        interactive = (i > 0)
+        print(f"📄 Processing {'first' if i==0 else 'subsequent'} file: {os.path.basename(fp)}")
+        recs = extract_data_to_list(fp, stmt, interactive)
+        all_records.extend(recs)
+    df = pd.DataFrame(all_records)
+    if not df.empty:
+        order = df['metric_name_ro'].drop_duplicates().tolist()
+        pivot = df.pivot_table(index='metric_name_ro', columns='period_end', values='value', aggfunc='first')
+        pivot = pivot.reindex(order)
+        cols = sorted(pivot.columns, key=lambda x: datetime.strptime(x, '%d/%m/%Y'))
+        pivot = pivot[cols]
+        out = f"{ticker}_{stmt}_extracted.xlsx"
+        pivot.to_excel(out)
+        print(f"✅ Exported to {out}")
+    save_metric_mappings()

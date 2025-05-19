@@ -98,7 +98,12 @@
             <div class="col-md-2">
                 <div class="row">
                     <div class="col-12">
-                        <p class="fw-bold text-purple">{{ (market_cap | float / 1_000_000) | round(1) }} mnRON
+                        <p class="fw-bold text-purple">
+                            {% if market_cap is not none and market_cap != "N/A" %}
+                                {{ (market_cap | float / 1_000_000) | round(1) }} mnRON
+                            {% else %}
+                                N/A
+                            {% endif %}
                         </p>
                     </div>
                     <div class="col-12">
@@ -135,7 +140,12 @@
             <div class="col-md-2">
                 <div class="row">
                     <div class="col-12">
-                        <p class="fw-bold text-purple">{{ (net_income / 1e6) | round(1) | string | replace('.', ',') }} mnRON
+                        <p class="fw-bold text-purple">
+                            {% if net_income is not none and net_income != "N/A" %}
+                                {{ (net_income | float / 1e6) | round(1) | string | replace('.', ',') }} mnRON
+                            {% else %}
+                                N/A
+                            {% endif %}
                         </p>
                     </div>
                     <div class="col-12">

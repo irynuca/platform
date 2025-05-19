@@ -1,20 +1,38 @@
 from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from .data_handler import (get_stock_overview, get_historical_stock_data, get_financial_statement, get_grouped_financial_ratios, 
+from .data_handler import (get_stock_overview, get_historical_stock_data, get_financial_statement, get_company_details_from_db,
+                           get_grouped_financial_ratios, 
                            get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data, get_revenue_qtl_and_change_data, 
                            get_operating_profit_qtl_and_margin_data, get_net_profit_qtl_and_margin_data, get_chart_comment, 
                            get_revenue_annual_and_change_data, get_dividends, get_dividends_dps_and_growth, get_dividend_yield_history,
                            get_payout_ratio_history, get_dividends_to_fcfe_history, get_calendar_events)
 import json
+import sqlite3
+import os
+import logging
 
 main = Blueprint('main', __name__)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Path to app/ directory
+DATA_DIR = os.path.join(BASE_DIR, "data")  # Path to data/
+DB_PATH = os.path.join(DATA_DIR, "financials.db") 
 # List of tickers
 tickers = ["AQ"]
 
-# Home page with search bar and dropdown
 @main.route('/')
 def home():
-    return render_template("home.html", tickers=tickers)
+    companies = []  # Fetch all companies for the dropdown
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT company_ticker, company_name FROM companies")
+            companies = cursor.fetchall()
+    except Exception as e:
+        logging.error(f"Error fetching companies for the home page: {e}")
+
+    # Convert to a list of dicts for the template
+    companies_list = [{"company_ticker": ticker, "company_name": name} for ticker, name in companies]
+    return render_template("home.html", companies=companies_list)
+
 
 # Handling search form submission (GET)
 @main.route('/analyze', methods=['GET'])

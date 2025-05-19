@@ -70,6 +70,7 @@
             </p>
 
             <!-- Search Box with Auto-Suggest using Bootstrap Dropdown -->
+            <!-- Dropdown Container -->
             <div class="dropdown mx-auto mb-4 position-relative" style="max-width: 600px; width: 100%;">
                 <form action="{{ url_for('main.analyze') }}" method="GET" id="search-form">
                     <div class="input-group">
@@ -88,13 +89,21 @@
                     </div>
 
                     <!-- Dropdown Menu -->
-                    <ul class="dropdown-menu w-100" id="ticker-dropdown">
-                        {% for ticker in tickers %}
-                            <li><button type="button" class="dropdown-item" onclick="selectTicker('{{ ticker }}')">{{ ticker }}</button></li>
+                    <ul class="dropdown-menu w-100" id="ticker-dropdown" aria-labelledby="ticker-search">
+                        {% for company in companies %}
+                            <li>
+                                <button type="button" class="dropdown-item" 
+                                        data-ticker="{{ company['company_ticker'] }}" 
+                                        data-name="{{ company['company_name'] }}"
+                                        onclick="selectTicker('{{ company['company_ticker'] }}', '{{ company['company_name'] }}')">
+                                    {{ company['company_name'] }} - {{ company['company_ticker'] }}
+                                </button>
+                            </li>
                         {% endfor %}
                     </ul>
                 </form>
             </div>
+
 
         </div>
     </div>
@@ -109,14 +118,16 @@
         dropdown.classList.add("show");
     });
 
-    // Filter dropdown items
+    // Filter dropdown items by both ticker and company name
     searchInput.addEventListener("input", function() {
         const filter = this.value.toUpperCase();
         const items = dropdown.querySelectorAll("li");
 
         items.forEach(function(item) {
-            const text = item.textContent.toUpperCase();
-            item.style.display = text.includes(filter) ? "" : "none";
+            const ticker = item.querySelector("button").dataset.ticker.toUpperCase();
+            const name = item.querySelector("button").dataset.name.toUpperCase();
+            const combined = `${name} - ${ticker}`;
+            item.style.display = combined.includes(filter) ? "" : "none";
         });
     });
 
@@ -128,11 +139,11 @@
     });
 
     // When selecting a ticker
-    function selectTicker(ticker) {
-        searchInput.value = ticker;
-        dropdown.classList.remove("show");
-        document.getElementById("search-form").submit();
-    }
+    function selectTicker(ticker, name) {
+    const searchInput = document.getElementById("ticker-search");
+    searchInput.value = `${name} - ${ticker}`;
+    document.getElementById("search-form").submit();}
+
 </script>
 
 </body>

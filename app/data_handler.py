@@ -1,6 +1,7 @@
 import yfinance as yf
 import pandas as pd
 import sqlite3
+import logging
 import os
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
@@ -26,12 +27,17 @@ def get_company_details_from_db(ticker):
         if result:
             return {"company_name": result[0], "industry": result[1]}
         else:
-            return {"company_name": ticker, "industry": "N/A"}
-    except Exception as e:
-        print(f"Database error while fetching company details: {e}")
+            # Fallback if ticker is not found in the database
+                logging.warning(f"Ticker '{ticker}' not found in the database.")
+                return {"company_name": ticker, "industry": "N/A"}
+
+    except sqlite3.Error as e:
+        logging.error(f"Database error while fetching company details for '{ticker}': {e}")
         return {"company_name": ticker, "industry": "N/A"}
-    finally:
-        conn.close()
+
+    except Exception as e:
+        logging.exception(f"Unexpected error while fetching company details for '{ticker}': {e}")
+        return {"company_name": ticker, "industry": "N/A"}
 
 def get_latest_stock_indicators(ticker):
     conn = sqlite3.connect(DB_PATH)
@@ -179,12 +185,12 @@ def get_stock_overview(ticker):
     """
     Combines company details, market indicators, income, and events into a single dictionary used for frontend display.
     """
+    # Fetch basic company info
     company_details = get_company_details_from_db(ticker)
     indicators = get_latest_stock_indicators(ticker)
     net_income = get_latest_net_income(ticker)
     earnings_date = get_next_earnings_date(ticker)
     variation_changes = get_latest_variation_changes(ticker)
-
 
     # Get business description from local file
     txt_filename = f"{ticker.upper()}_about_ro.txt"
@@ -195,22 +201,30 @@ def get_stock_overview(ticker):
     except FileNotFoundError:
         business_description = "Descrierea companiei nu este disponibilă."
 
-    stock_data = {
-    "company_name": company_details["company_name"],
-    "industry": company_details["industry"],
-    "last_price": indicators["last_price"],  # raw
-    "price_variation": get_latest_price_variation(ticker),
-    "market_cap": indicators["market_cap"],  # raw
-    "pe_ratio": indicators["pe_ratio"],      # raw
-    "net_income": net_income,                # raw
-    "next_earnings_date": format_date_ro(earnings_date),
-    "longBusinessSummary": business_description,
-    "yoy_change": variation_changes["yoy_change"],
-    "ytd_change": variation_changes["ytd_change"],
+    # Helper to clean numeric values
+    def clean_numeric(value, default="N/A"):
+        try:
+            return float(str(value).replace(",", "").replace(" ", ""))
+        except (ValueError, TypeError):
+            return default
 
-}
+    # Build the stock data dictionary
+    stock_data = {
+        "company_name": company_details.get("company_name", ticker),
+        "industry": company_details.get("industry", "N/A"),
+        "last_price": clean_numeric(indicators.get("last_price", "N/A")),
+        "price_variation": clean_numeric(get_latest_price_variation(ticker)),
+        "market_cap": clean_numeric(indicators.get("market_cap", "N/A")),
+        "pe_ratio": clean_numeric(indicators.get("pe_ratio", "N/A")),
+        "net_income": clean_numeric(net_income),
+        "next_earnings_date": format_date_ro(earnings_date),
+        "longBusinessSummary": business_description,
+        "yoy_change": clean_numeric(variation_changes.get("yoy_change", "N/A")),
+        "ytd_change": clean_numeric(variation_changes.get("ytd_change", "N/A")),
+    }
 
     return stock_data
+
 
 def get_historical_stock_data(ticker, period="1mo", interval="1d"):
     conn=sqlite3.connect(DB_PATH)

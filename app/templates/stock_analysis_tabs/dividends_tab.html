@@ -55,36 +55,88 @@
 
                 <!-- Column 2: Randament Dividend -->
                 <div class="col-md-2 col-sm-6">
-                <div class="text-muted small fw-semibold mb-1">Randament dividend</div>
-                <div class="fs-6 fw-medium">{{ (dividend_yield*100)| round(2)  }}%</div>
-                <div class="text-muted small fw-semibold mt-3">Randament precedent</div>
-                <div class="fs-6">{{ (previous_dividend_yield*100) | round(2) }}%</div>
+                    <div class="text-muted small fw-semibold mb-1">Randament dividend</div>
+                    <div class="fs-6 fw-medium">
+                        {% if dividend_yield is not none and dividend_yield != "N/A" %}
+                            {{ (dividend_yield * 100) | round(2) }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+
+                    <div class="text-muted small fw-semibold mt-3">Randament precedent</div>
+                    <div class="fs-6">
+                        {% if previous_dividend_yield is not none and previous_dividend_yield != "N/A" %}
+                            {{ (previous_dividend_yield * 100) | round(2) }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
                 </div>
 
-                <!-- Column 3: Rata distribuire -->
+                <!-- Column 3: Payout Ratios -->
                 <div class="col-md-2 col-sm-6">
-                <div class="text-muted small fw-semibold mb-1">Rată distribuire</div>
-                <div class="fs-6 fw-medium">{{ (payout_ratio*100) | round(0) }}%</div>
-                <div class="text-muted small fw-semibold mt-3">Rată distribuire precedentă</div>
-                <div class="fs-6">{{ (previous_payout_ratio*100) | round(0) }}%</div>
+                    <div class="text-muted small fw-semibold mb-1">Rată distribuire</div>
+                    <div class="fs-6 fw-medium">
+                        {% if payout_ratio is not none and payout_ratio != "N/A" %}
+                            {{ (payout_ratio * 100) | round(0) }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+
+                    <div class="text-muted small fw-semibold mt-3">Rată distribuire precedentă</div>
+                    <div class="fs-6">
+                        {% if previous_payout_ratio is not none and previous_payout_ratio != "N/A" %}
+                            {{ (previous_payout_ratio * 100) | round(0) }}%
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
                 </div>
 
-                <!-- Column 4: Data plății -->
+                <!-- Column 4: Payment Dates -->
                 <div class="col-md-2 col-sm-6">
-                <div class="text-muted small fw-semibold mb-1">Data plății</div>
-                <div class="fs-6 fw-medium">{{ payment_date | ro_date }}</div>
-                <div class="text-muted small fw-semibold mt-3">Ex-date</div>
-                <div class="fs-6">{{ last_ex_date | ro_date }}</div>
+                    <div class="text-muted small fw-semibold mb-1">Data plății</div>
+                    <div class="fs-6 fw-medium">
+                        {% if payment_date is not none and payment_date != "N/A" %}
+                            {{ payment_date | ro_date }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+
+                    <div class="text-muted small fw-semibold mt-3">Ex-date</div>
+                    <div class="fs-6">
+                        {% if last_ex_date is not none and last_ex_date != "N/A" %}
+                            {{ last_ex_date | ro_date }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
                 </div>
 
-                <!-- Column 5: Tip dividend -->
+                <!-- Column 5: Dividend Types -->
                 <div class="col-md-2 col-sm-6">
-                <div class="text-muted small fw-semibold mb-1">Tip dividend</div>
-                <div class="fs-6 fw-medium">{{ last_type }}</div>
-                <div class="text-muted small fw-semibold mt-3">Frecvență</div>
-                <div class="fs-6">{{ last_frequency }}</div>
+                    <div class="text-muted small fw-semibold mb-1">Tip dividend</div>
+                    <div class="fs-6 fw-medium">
+                        {% if last_type is not none and last_type != "N/A" %}
+                            {{ last_type }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+
+                    <div class="text-muted small fw-semibold mt-3">Frecvență</div>
+                    <div class="fs-6">
+                        {% if last_frequency is not none and last_frequency != "N/A" %}
+                            {{ last_frequency }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
                 </div>
-          
+
                 <!-- Column 6: Shot Clock -->
                 <div class="col-md-2 col-sm-6">
                     {% if last_ex_date %}
