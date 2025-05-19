@@ -26827,3 +26827,94 @@ p.tight {
     line-height: 1.2 !important;
     border-radius: 4px !important;
 }
+
+
+/* ── 1. Wrap in a Flex Container ───────────────────────────────── */
+/* Make the sidebar + main flow side-by-side */
+.app-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+
+/* ── 3. Main Content Flexes ─────────────────────────────────────── */
+#main-wrapper {
+  flex: 1;
+  overflow-x: hidden;
+}
+
+/* ─ Override DexignZone’s fixed modern width ───────────────── */
+[data-sidebar-style="modern"][data-layout="vertical"] .dlabnav {
+  width: fit-content !important;      /* shrink‐to‐fit the icons+text */
+  /* optional constraints: */
+  min-width: 8rem;                    /* never too narrow */
+  max-width: 16rem;                   /* never too wide */
+  flex-shrink: 0;                     /* don’t collapse in flexbox */
+}
+
+
+/* ── Legend color boxes ───────────────────────────────────────── */
+.legend-color {
+  display: inline-block;
+  width: 2rem;        /* adjust to taste */
+  height: 1rem;        /* adjust to taste */
+  border-radius: 0.25rem;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+/* ── Extended flat BG utilities ───────────────────────────────── */
+
+/* Bootstrap palette colors (fit the root :root vars) */
+.bg-blue        { background-color: var(--bs-blue)          !important; }
+.bg-indigo      { background-color: var(--bs-indigo)        !important; }
+.bg-purple      { background-color: var(--bs-purple)        !important; }
+.bg-pink        { background-color: var(--bs-pink)          !important; }
+.bg-red         { background-color: var(--bs-red)           !important; }
+.bg-orange      { background-color: var(--bs-orange)        !important; }
+.bg-yellow      { background-color: var(--bs-yellow)        !important; }
+.bg-green       { background-color: var(--bs-green)         !important; }
+.bg-teal        { background-color: var(--bs-teal)          !important; }
+.bg-cyan        { background-color: var(--bs-cyan)          !important; }
+
+/* Your custom theme vars (from DexignZone’s root) */
+.bg-primary-hover  { background-color: var(--primary-hover)  !important; }
+.bg-primary-dark   { background-color: var(--primary-dark)   !important; }
+.bg-linear         { background-image:   var(--linear)        !important; }
+
+
+/* ── Calendar scroll styling ─────────────────────────────────── */
+.calendar-container {
+  max-height: 100%;           /* ensure it can scroll */
+  overflow: auto;
+}
+
+/* track (background behind the thumb) */
+.calendar-container::-webkit-scrollbar {
+  width: 0.5rem;
+  height: 0.5rem;
+  background: transparent;
+}
+
+/* the bar the thumb sits in */
+.calendar-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* the draggable part */
+.calendar-container::-webkit-scrollbar-thumb {
+  background-color: var(--primary);
+  border-radius: 0.625rem;     /* same as your tables */
+  transition: background 0.2s ease-in-out;
+}
+
+/* hover state */
+.calendar-container::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Firefox scrollbar styling */
+.calendar-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) transparent;
+}
