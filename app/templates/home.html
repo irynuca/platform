@@ -78,7 +78,7 @@
                             <i class="fas fa-search text-secondary"></i>
                         </span>
                         <input type="text" 
-                            class="form-control dropdown-toggle border-primary" 
+                            class="form-control border-primary" 
                             id="ticker-search" 
                             name="ticker" 
                             placeholder="Introdu simbolul companiei..." 
@@ -94,13 +94,14 @@
                             <li>
                                 <button type="button" class="dropdown-item" 
                                         data-ticker="{{ company['company_ticker'] }}" 
-                                        data-name="{{ company['company_name'] }}"
-                                        onclick="selectTicker('{{ company['company_ticker'] }}', '{{ company['company_name'] }}')">
+                                        onclick="selectTicker('{{ company['company_ticker'] }}')">
                                     {{ company['company_name'] }} - {{ company['company_ticker'] }}
                                 </button>
+
                             </li>
                         {% endfor %}
                     </ul>
+
                 </form>
             </div>
 
@@ -112,39 +113,49 @@
 <script>
     const searchInput = document.getElementById("ticker-search");
     const dropdown = document.getElementById("ticker-dropdown");
+    const form = document.getElementById("search-form"); // your <form id="search-form" …>
 
     // Show dropdown when input is focused
-    searchInput.addEventListener("focus", function() {
+    searchInput.addEventListener("focus", () => {
         dropdown.classList.add("show");
     });
 
     // Filter dropdown items by both ticker and company name
     searchInput.addEventListener("input", function() {
         const filter = this.value.toUpperCase();
-        const items = dropdown.querySelectorAll("li");
-
-        items.forEach(function(item) {
-            const ticker = item.querySelector("button").dataset.ticker.toUpperCase();
-            const name = item.querySelector("button").dataset.name.toUpperCase();
-            const combined = `${name} - ${ticker}`;
-            item.style.display = combined.includes(filter) ? "" : "none";
+        dropdown.querySelectorAll("li").forEach(item => {
+            const btn = item.querySelector("button");
+            const ticker = btn.dataset.ticker.toUpperCase();
+            const name   = btn.dataset.name.toUpperCase();
+            item.style.display = (`${name} - ${ticker}`).includes(filter)
+                ? "" 
+                : "none";
         });
     });
 
     // Hide dropdown when clicking outside
-    document.addEventListener("click", function(event) {
+    document.addEventListener("click", event => {
         if (!searchInput.contains(event.target) && !dropdown.contains(event.target)) {
             dropdown.classList.remove("show");
         }
     });
 
-    // When selecting a ticker
-    function selectTicker(ticker, name) {
-    const searchInput = document.getElementById("ticker-search");
-    searchInput.value = `${name} - ${ticker}`;
-    document.getElementById("search-form").submit();}
+    // When selecting a ticker, populate input *and* navigate
+    function selectTicker(ticker) {
+        searchInput.value = ticker;
+        dropdown.classList.remove("show");
 
+        // Option A: submit your GET form to /analyze?ticker=…
+        if (form) {
+            form.submit();
+            return;
+        }
+
+        // Option B: direct-redirect to /analysis/<ticker>
+        window.location.href = `/analysis/${ticker}`;
+    }
 </script>
+
 
 </body>
 </html>

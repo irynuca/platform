@@ -34,6 +34,7 @@ def home():
     return render_template("home.html", companies=companies_list)
 
 
+
 # Handling search form submission (GET)
 @main.route('/analyze', methods=['GET'])
 def analyze():
