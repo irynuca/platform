@@ -68,13 +68,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 renderOperatingProfitChart();
                 renderNetProfitChart();
                 renderAnnualRevenueGrowthChart();
+                renderAnnualOperatingProfitChart();
+                renderAnnualNetProfitChart();
 
             }
 
             else if (targetTabId === "#financials") {
-                console.log("🔵 Switched to Financials tab");
-    
-                const container = document.querySelector("#pl_statement .table-container");
+                      const container = document.querySelector("#pl_statement .table-container");
                 if (container) {
                     container.innerHTML = "<p>📊 Se încarcă datele financiare...</p>";
                 }

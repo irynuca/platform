@@ -4,7 +4,8 @@ from .data_handler import (get_stock_overview, get_historical_stock_data, get_fi
                            get_revenue_data, get_segment_revenue_notes, get_profit_and_margin_data, get_revenue_qtl_and_change_data, 
                            get_operating_profit_qtl_and_margin_data, get_net_profit_qtl_and_margin_data, get_chart_comment, 
                            get_revenue_annual_and_change_data, get_dividends, get_dividends_dps_and_growth, get_dividend_yield_history,
-                           get_payout_ratio_history, get_dividends_to_fcfe_history, get_calendar_events)
+                           get_payout_ratio_history, get_dividends_to_fcfe_history, get_calendar_events, get_operating_profit_annual_and_margin_data,
+                           get_net_profit_annual_and_margin_data)
 import json
 import sqlite3
 import os
@@ -16,7 +17,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Path to app/ directory
 DATA_DIR = os.path.join(BASE_DIR, "data")  # Path to data/
 DB_PATH = os.path.join(DATA_DIR, "financials.db") 
 # List of tickers
-tickers = ["AQ"]
+tickers = ["AQ", "WINE"]
 
 @main.route('/')
 def home():
@@ -30,7 +31,7 @@ def home():
         logging.error(f"Error fetching companies for the home page: {e}")
 
     # Convert to a list of dicts for the template
-    companies_list = [{"company_ticker": ticker, "company_name": name} for ticker, name in companies]
+    companies_list = [{"company_ticker": ticker, "company_name": name} for ticker, name in companies if ticker in tickers]
     return render_template("home.html", companies=companies_list)
 
 
@@ -178,6 +179,16 @@ def net_profit_qtl_and_margin_data(ticker):
 @main.route("/revenue_annual_and_change_data/<ticker>")
 def revenue_annual_and_change_data(ticker):
     data = get_revenue_annual_and_change_data(ticker)
+    return jsonify(data)
+
+@main.route("/operating_profit_annual_and_margin_data/<ticker>")
+def operating_profit_annual_and_margin_data(ticker):
+    data = get_operating_profit_annual_and_margin_data(ticker)
+    return jsonify(data)
+
+@main.route("/net_profit_annual_and_margin_data/<ticker>")
+def net_profit_annual_and_margin_data(ticker):
+    data = get_net_profit_annual_and_margin_data(ticker)
     return jsonify(data)
 
 @main.route("/dividends/dps_and_growth/<ticker>")

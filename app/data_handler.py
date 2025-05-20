@@ -22,7 +22,7 @@ def get_company_details_from_db(ticker):
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT name, industry FROM companies WHERE ticker = ?", (ticker.upper(),))
+        cursor.execute("SELECT company_name, industry FROM companies WHERE company_ticker = ?", (ticker.upper(),))
         result = cursor.fetchone()
         if result:
             return {"company_name": result[0], "industry": result[1]}
@@ -44,7 +44,7 @@ def get_latest_stock_indicators(ticker):
     query = """
         SELECT close_price, market_cap, pe_ratio, date
         FROM stock_data
-        WHERE ticker = ?
+        WHERE company_ticker = ?
         ORDER BY ABS(julianday(date) - julianday('now')) ASC
         LIMIT 1
     """
@@ -110,8 +110,8 @@ def get_next_earnings_date(ticker):
     conn = sqlite3.connect(DB_PATH)
     query = """
         SELECT event_date 
-        FROM company_events 
-        WHERE ticker = ? AND event_type = 'earnings_release' AND event_date >= date('now')
+        FROM financial_events 
+        WHERE company_ticker = ? AND event_type = 'earnings_release' AND event_date >= date('now')
         ORDER BY event_date ASC 
         LIMIT 1
     """
@@ -131,7 +131,7 @@ def get_latest_price_variation(ticker):
     query = """
         SELECT change_day
         FROM stock_data
-        WHERE ticker = ?
+        WHERE company_ticker = ?
           AND change_day IS NOT NULL
         ORDER BY ABS(julianday(date) - julianday('now')) ASC
         LIMIT 1
@@ -152,7 +152,7 @@ def get_latest_variation_changes(ticker):
     query = """
         SELECT change_yoy, change_ytd
         FROM stock_data
-        WHERE ticker = ?
+        WHERE company_ticker = ?
           AND change_yoy IS NOT NULL
           AND change_ytd IS NOT NULL
         ORDER BY ABS(julianday(date) - julianday('now')) ASC
@@ -832,6 +832,105 @@ def get_revenue_annual_and_change_data(ticker):
         "change_rate": change_rate
     }
 
+def get_operating_profit_annual_and_margin_data(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # --- Fetch Revenue from view_financial_qtl ---
+    cursor.execute("""
+        SELECT v.period_end, v.display_period, v.value
+        FROM view_financial_annual v
+        JOIN financial_metrics m 
+        ON v.metric_name_ro = m.metric_name_ro
+        AND v.company_ticker = m.company_ticker
+        WHERE v.company_ticker = ?
+        AND m.generalized_metric_eng = 'Operating profit'
+        ORDER BY v.period_end ASC
+    """, (ticker,))
+    operating_profit_data = cursor.fetchall()
+    print("Operating profit data:", operating_profit_data)
+
+    cursor.execute("""
+        SELECT period_end, display_period, value
+        FROM view_financial_ratios_annual
+        WHERE company_ticker = ? AND ratio_name_eng = 'Operating profit margin'
+        ORDER BY period_end ASC
+    """, (ticker,))
+    operating_margin_data = cursor.fetchall()
+    print("Operating margin data:", operating_margin_data)
+
+    conn.close()
+
+    # --- Normalize and match periods
+    operating_profit_dict = {row[0]: (row[1], row[2]) for row in operating_profit_data}  # period_end: (display_period, value)
+    operating_margin_dict = {row[0]: row[2] for row in operating_margin_data}  # ✅ value, not display_period
+
+    common_periods = sorted(
+    p for p in (set(operating_profit_dict.keys()) & set(operating_margin_dict.keys()))
+    if operating_margin_dict[p] is not None and operating_profit_dict[p][1] is not None)[-8:]
+
+    if not common_periods:
+        return None
+
+    periods = [operating_profit_dict[p][0] for p in common_periods]
+    operating_profit = [float(str(operating_profit_dict[p][1]).replace(",", "").replace(" ", "")) for p in common_periods]
+    operating_margin = [float(str(operating_margin_dict[p]).replace(",", "").replace(" ", "")) for p in common_periods]
+
+    return {
+        "periods": periods,
+        "operating_profit": operating_profit,
+        "operating_margin": operating_margin
+    }
+
+def get_net_profit_annual_and_margin_data(ticker):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # --- Fetch Revenue from view_financial_qtl ---
+    cursor.execute("""
+        SELECT v.period_end, v.display_period, v.value
+        FROM view_financial_annual v
+        JOIN financial_metrics m 
+        ON v.metric_name_ro = m.metric_name_ro
+        AND v.company_ticker = m.company_ticker
+        WHERE v.company_ticker = ?
+        AND m.generalized_metric_eng = 'Net profit a.m.'
+        ORDER BY v.period_end ASC
+    """, (ticker,))
+    net_profit_data = cursor.fetchall()
+    print("Net profit data:", net_profit_data)
+
+    cursor.execute("""
+        SELECT period_end, display_period, value
+        FROM view_financial_ratios_annual
+        WHERE company_ticker = ? AND ratio_name_eng = 'Net profit margin'
+        ORDER BY period_end ASC
+    """, (ticker,))
+    net_margin_data = cursor.fetchall()
+    print("Net profit margin data:", net_margin_data)
+
+    conn.close()
+
+    # --- Normalize and match periods
+    net_profit_dict = {row[0]: (row[1], row[2]) for row in net_profit_data}  # period_end: (display_period, value)
+    net_margin_dict = {row[0]: row[2] for row in net_margin_data}  # ✅ value, not display_period
+
+    common_periods = sorted(
+    p for p in (set(net_profit_dict.keys()) & set(net_margin_dict.keys()))
+    if net_margin_dict[p] is not None and net_profit_dict[p][1] is not None)[-8:]
+
+    if not common_periods:
+        return None
+
+    periods = [net_profit_dict[p][0] for p in common_periods]
+    net_profit = [float(str(net_profit_dict[p][1]).replace(",", "").replace(" ", "")) for p in common_periods]
+    net_margin = [float(str(net_margin_dict[p]).replace(",", "").replace(" ", "")) for p in common_periods]
+
+    return {
+        "periods": periods,
+        "net_profit": net_profit,
+        "net_margin": net_margin
+    }
 def get_dividends(ticker):
     """
     Fetch dividend data for a given ticker as a list of dicts.
@@ -912,7 +1011,6 @@ def get_dividend_yield_history(ticker):
 
     return [{"year": year, "dividend_yield": val} for year, val in sorted(grouped.items())]
 
-
 def get_payout_ratio_history(ticker):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -932,7 +1030,6 @@ def get_payout_ratio_history(ticker):
         grouped[row["DPS_year"]] += row["payout_ratio"] or 0
 
     return [{"year": year, "payout_ratio": val} for year, val in sorted(grouped.items())]
-
 
 def get_dividends_to_fcfe_history(ticker):
     conn = sqlite3.connect(DB_PATH)

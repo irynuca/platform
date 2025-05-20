@@ -91,81 +91,113 @@
         </div>
 
     <!-- Key Financial Metrics Section -->
-    <div class="container">
-        <div class="row text-center mt-3">
+    <div class="container-fluid">
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-5 g-3 text-center mt-3">
 
             <!-- Column 1: Market Cap -->
-            <div class="col-md-2">
-                <div class="row">
-                    <div class="col-12">
-                        <p class="fw-bold text-purple">
-                            {% if market_cap is not none and market_cap != "N/A" %}
-                                {{ (market_cap | float / 1_000_000) | round(1) }} mnRON
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="col-12">
-                        <p class="text-muted small">Capitalizare bursieră</p>
+            <div class="col">
+                <div class="card overflow-hidden w-100 h-auto", style="--bs-card-bg: rgba(94, 62, 208, 0.3)">
+                    <div class="card-body text-start px-3 py-1">
+                        <div class="students1 three d-flex align-items-center justify-content-between">
+                            <div class="content">
+                                <h2 class="mb-0 fs-14">
+                                {% if market_cap is not none and market_cap != "N/A" %}
+                                    {{ (market_cap | float / 1_000_000) | round(1) }} mn RON
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                                </h2>
+                                <span class="mb-0 fs-14">Capitalizare bursiera</span>
+                            </div>
+                            <div class="icon-box text-end">
+                                <!-- Example: Lucide/Line Awesome Icon -->
+                                <i class="las la-coins la-3x" style="color: var(--bs-primary)"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+    
 
             <!-- Column 2: YoY Change / YTD Change -->
-            <div class="col-md-2">
-                <div class="row">
-                    <div class="col-12">
-                        <p class="fw-bold text-purple">{{ yoy_change }} % / {{ ytd_change }} %</p>
-                    </div>
-                    <div class="col-12">
-                        <p class="text-muted small">var. an/an / din ian.</p>
+            <div class="col">
+                <div class="card overflow-hidden w-100 h-auto", style="--bs-card-bg: rgba(94, 62, 208, 0.3)">
+                    <div class="card-body text-start px-3 py-1">
+                        <div class="students1 three d-flex align-items-center justify-content-between">
+                            <div class="content">
+                                <h2 class="mb-0 fs-14">
+                                    {{ yoy_change }} % / {{ ytd_change }} %</h2>
+                                    <span class="mb-0 fs-14">Var. an/an / din ian.</span>
+                            </div>
+                                <div class="icon-box text-end">
+                                <!-- Example: Lucide/Line Awesome Icon -->
+                                <i class="las la-chalkboard la-3x" style="color: var(--bs-teal)"></i>
+                                </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Column 3: P/E Ratio -->
-            <div class="col-md-2">
-                <div class="row">
-                    <div class="col-12">
-                        <p class="fw-bold text-purple">{{ pe_ratio | float | round(2) }}x</p>
-                    </div>
-                    <div class="col-12">
-                        <p class="text-muted small">P/E</p>
+            <div class="col">
+                <div class="card overflow-hidden w-100 h-auto", style="--bs-card-bg: rgba(94, 62, 208, 0.3)">
+                    <div class="card-body text-start px-3 py-1">
+                        <div class="students1 one d-flex align-items-center justify-content-between">
+                            <div class="content">
+                                <h2 class="mb-0 fs-14">
+                                    {{ pe_ratio | float | round(2) }}×</h2>
+                                    <span class="mb-0 fs-14">P / E</span>
+                            </div>
+                                <div class="icon-box text-end">
+                                <!-- Example: Lucide/Line Awesome Icon -->
+                                <i class="las la-chart-pie la-3x" style="color: var(--bs-secondary)"></i>
+                                </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Column 4: Net Income -->
-            <div class="col-md-2">
-                <div class="row">
-                    <div class="col-12">
-                        <p class="fw-bold text-purple">
-                            {% if net_income is not none and net_income != "N/A" %}
-                                {{ (net_income | float / 1e6) | round(1) | string | replace('.', ',') }} mnRON
-                            {% else %}
-                                N/A
-                            {% endif %}
-                        </p>
-                    </div>
-                    <div class="col-12">
-                        <p class="text-muted small">Profit net LTM</p>
+            <div class="col">
+                <div class="card overflow-hidden w-100 h-auto", style="--bs-card-bg: rgba(94, 62, 208, 0.3)">
+                    <div class="card-body text-start px-3 py-1">
+                        <div class="students1 two d-flex align-items-center justify-content-between">
+                            <div class="content">
+                                <h2 class="mb-0 fs-14">
+                                {% if net_income is not none and net_income != "N/A" %}
+                                    {{ (net_income | float / 1e6) | round(1) | string | replace('.', ',') }} mnRON
+                                {% else %}
+                                    N/A
+                                {% endif %}</h2>
+                                <span class="mb-0 fs-14">Profit net LTM</span>
+                            </div>
+                            <div class="icon-box text-end">
+                                <!-- Example: Lucide/Line Awesome Icon -->
+                                <i class="las la-signal la-3x" style="color: var(--bs-info)"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+  
 
             <!-- Column 5: Next Earnings Date -->
-            <div class="col-md-2">
-                <div class="row">
-                    <div class="col-12">
-                        <p class="fw-bold text-purple">{{ next_earnings_date }}</p>
-                    </div>
-                    <div class="col-12">
-                        <p class="text-muted small">Următoarea raportare</p>
+            <div class="col">
+                <div class="card overflow-hidden w-100 h-auto", style="--bs-card-bg: rgba(94, 62, 208, 0.3)">
+                    <div class="card-body text-start px-3 py-1">
+                        <div class="students1 three d-flex align-items-center justify-content-between">
+                            <div class="content">
+                                <h2 class="mb-0 fs-14">{{ next_earnings_date }}</h2>
+                                <span class="mb-0 fs-14">Următoarea raportare</span>
+                            </div>
+                            <div class="icon-box text-end">
+                                <!-- Example: Lucide/Line Awesome Icon -->
+                                <i class="las la-calendar la-3x" style="color: var(--bs-primary-dark)"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -226,6 +258,8 @@
 <script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/operating_profit_qtl_chart.js') }}"></script>
 <script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/net_profit_qtl_chart.js') }}"></script>
 <script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/revenue_growth_annual_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/operating_profit_annual.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stock_analysis/charts/fundamentals/net_profit_annual.js') }}"></script>
 
 <!-- ✅ Data loaders -->
 <script src="{{ url_for('static', filename='js/stock_analysis/load_stock_chart.js') }}"></script>

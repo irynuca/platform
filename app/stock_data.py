@@ -8,11 +8,32 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Path to app/ directory
 DATA_DIR = os.path.join(BASE_DIR, "data")              # Path to data/
 DB_PATH = os.path.join(DATA_DIR, "financials.db")      # Full path to database
 
-TICKERS = ["AQ"]
-SHARES_BY_TICKER = {"AQ": 1200002400}
+TICKERS = ["AQ", "WINE"]
+SHARES_BY_TICKER = {"AQ": 1200002400, "WINE":40426674}
 
-# 🔗 Open one global connection (shared by all functions)
-conn = sqlite3.connect(DB_PATH)
+# Create/ensure table exists (run once)
+def initialize_stock_table():
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.executescript("""
+        CREATE TABLE IF NOT EXISTS stock_data (
+            company_ticker TEXT,
+            date TEXT,
+            close_price REAL,
+            volume INTEGER,
+            market_cap REAL,
+            pe_ratio REAL,
+            eps_ttm REAL,
+            change_day REAL,
+            change_yoy REAL,
+            change_ytd REAL,
+            source TEXT,
+            PRIMARY KEY (company_ticker, date)
+        )
+        """)
+
+# Fetch & store price history
+# Uses yf.download to avoid hanging, with threads=False and progress=False
+# Adds a timeout via yfinance internal session settings
 
 def fetch_and_store_stock_data(ticker):
     shares_outstanding = SHARES_BY_TICKER.get(ticker)
@@ -21,79 +42,59 @@ def fetch_and_store_stock_data(ticker):
         return
 
     print(f"📥 Fetching full history for {ticker}...")
+    try:
+        # Module-level download with no threading & no progress bar
+        df = yf.download(
+            tickers=f"{ticker}.RO", 
+            period="max", 
+            interval="1d", 
+            progress=False, 
+            threads=False,
+            auto_adjust=True 
+        )
+    except Exception as e:
+        print(f"❌ Error fetching data for {ticker}: {e}")
+        return
 
-    yf_ticker = yf.Ticker(ticker + ".RO")
-    hist = yf_ticker.history(period="max", interval="1d")
-
-    if hist.empty:
+    if df.empty:
         print(f"❌ No price history available for {ticker}")
         return
 
-    # Format & compute additional columns
-    hist.reset_index(inplace=True)
-    hist["date"] = hist["Date"].dt.strftime("%Y-%m-%d")
-    hist["close_price"] = hist["Close"].astype(float).round(4)
-    hist["volume"] = hist["Volume"]
-    hist["market_cap"] = (hist["close_price"] * shares_outstanding).astype(float)
-    hist["company_ticker"] = ticker
-    hist["source"] = "yfinance"
+    # Prepare DataFrame
+    df = df.reset_index()
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns=df.columns.droplevel(0)
+    df["date"] = df["Date"].dt.strftime("%Y-%m-%d")
+    df["close_price"] = df["Close"].astype(float).round(4)
+    df["volume"] = df["Volume"].astype(int)
+    df["market_cap"] = (df["close_price"] * shares_outstanding).astype(float)
+    df["company_ticker"] = ticker
+    df["source"] = "yfinance"
 
-    cols_to_keep = [
-        "company_ticker", "date", "close_price", "volume", "market_cap", "source"
-    ]
-    data = hist[cols_to_keep].copy()
+    # Select & add nullable columns
+    cols = ["company_ticker", "date", "close_price", "volume", "market_cap", "source"]
+    data = df[cols].copy()
+    for col in ["pe_ratio", "eps_ttm", "change_day", "change_yoy", "change_ytd"]:
+        data[col] = None
 
-    # Add nullable columns for future updates
-    data.loc[:, "pe_ratio"] = None
-    data.loc[:,"eps_ttm"] = None
-    data.loc[:,"change_day"] = None
-    data.loc[:,"change_yoy"] = None
-    data.loc[:,"change_ytd"] = None
+    # Insert into DB
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        # Bulk insert using executemany
+        records = [tuple(row) for row in data.to_records(index=False)]
+        placeholders = ",".join(["?" for _ in range(len(data.columns))])
+        sql = f"""
+            INSERT OR REPLACE INTO stock_data ({','.join(data.columns)})
+            VALUES ({placeholders})
+        """
+        cursor.executemany(sql, records)
+        conn.commit()
 
-    # Connect & insert into DB
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Create table if not exists
-    cursor.executescript("""
-    DROP TABLE IF EXISTS stock_data;              
-    CREATE TABLE IF NOT EXISTS stock_data (
-        company_ticker TEXT,
-        date TEXT,
-        close_price REAL,
-        volume INTEGER,
-        market_cap REAL,
-        pe_ratio REAL,
-        source TEXT,
-        eps_ttm REAL,
-        change_day REAL,
-        change_yoy REAL,
-        change_ytd REAL,
-        PRIMARY KEY (company_ticker, date)
-    )
-    """)
-
-    # Insert records
-    for _, row in data.iterrows():
-        cursor.execute("""
-        INSERT OR REPLACE INTO stock_data (
-            company_ticker, date, close_price, volume,
-            market_cap, pe_ratio, source, eps_ttm, change_day,
-            change_yoy, change_ytd
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            row["company_ticker"], row["date"], float(row["close_price"]),
-            row["volume"], float(row["market_cap"]),
-            float(row["pe_ratio"]), row["source"], float(row["eps_ttm"]),
-            row["change_day"], row["change_yoy"], row["change_ytd"]
-        ))
-
-    conn.commit()
-    conn.close()
     print(f"✅ Stored {len(data)} rows for {ticker} into stock_data.")
 
 # 🔍 Get earnings release events
 def get_events(ticker):
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         SELECT event_date, period_start, period_end
@@ -115,6 +116,7 @@ def get_events(ticker):
 
 # 🔍 Get net profit values
 def get_financials(ticker):
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("""
         SELECT period_start, period_end, value
@@ -285,23 +287,24 @@ def update_variations():
 
 
 if __name__ == "__main__":
-    ticker = "AQ"
-    shares = SHARES_BY_TICKER[ticker]
-
+    
+    initialize_stock_table()
     # Fetch historical price & volume data and populate stock_data table
-    fetch_and_store_stock_data(ticker)
+    for ticker in TICKERS:
+        fetch_and_store_stock_data(ticker)
 
-    # Get earnings events and financial results
-    events = get_events(ticker)
-    financials = get_financials(ticker)
+        # Get earnings events and financial results
+        events = get_events(ticker)
+        financials = get_financials(ticker)
 
-    # Compute EPS timeline
-    eps_timeline = build_eps_timeline(events, financials, shares)
+        shares = SHARES_BY_TICKER[ticker]
+        # Compute EPS timeline
+        eps_timeline = build_eps_timeline(events, financials, shares)
 
-    for eps in eps_timeline:
-        print(f"📅 From {eps['from_date']}: EPS_TTM = {round(eps['eps_ttm'], 4)}")
+        for eps in eps_timeline:
+            print(f"📅 From {eps['from_date']}: EPS_TTM = {round(eps['eps_ttm'], 4)}")
 
-    # Update stock_data with EPS values and then compute ratios
-    update_eps_in_stock_data(ticker, eps_timeline)
-    update_pe_ratio(ticker)
-    update_variations()
+        # Update stock_data with EPS values and then compute ratios
+        update_eps_in_stock_data(ticker, eps_timeline)
+        update_pe_ratio(ticker)
+        update_variations()

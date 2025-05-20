@@ -26,6 +26,8 @@ from data_handler import (
     get_revenue_qtl_and_change_data,
     get_operating_profit_qtl_and_margin_data,
     get_net_profit_qtl_and_margin_data,
+    get_revenue_annual_and_change_data,
+    get_operating_profit_annual_and_margin_data,
     get_dividends,
     get_dividends_dps_and_growth,
     get_dividend_yield_history,
@@ -103,6 +105,11 @@ def test_net_profit_qtl_and_margin_data(ticker):
     print(get_net_profit_qtl_and_margin_data(ticker))
     print()
 
+def test_operating_profit_annual_and_margin_data(ticker):
+    print("➡️ Testing get_operating_profit_annual_and_margin_data")
+    print(get_operating_profit_annual_and_margin_data(ticker))
+    print()
+
 def test_get_dividends(ticker):
     print("➡️ Testing get_dividends")
     print(get_dividends(ticker))
@@ -149,12 +156,13 @@ test_functions = {
     "11": test_revenue_qtl_and_change_data,
     "12": test_operating_profit_qtl_and_margin_data,
     "13": test_net_profit_qtl_and_margin_data,
-    "14": test_get_dividends,
-    "15": test_get_dividends_dps_and_growth,
-    "16": test_get_dividend_yield_history,
-    "17": test_get_payout_ratio_history,
-    "18": test_get_dividends_to_fcfe_history,
-    "19": test_get_calendar_events
+    "14": test_operating_profit_annual_and_margin_data,
+    "15": test_get_dividends,
+    "16": test_get_dividends_dps_and_growth,
+    "17": test_get_dividend_yield_history,
+    "18": test_get_payout_ratio_history,
+    "19": test_get_dividends_to_fcfe_history,
+    "20": test_get_calendar_events
 }
 
 def main():

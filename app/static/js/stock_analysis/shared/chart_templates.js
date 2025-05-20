@@ -1,6 +1,13 @@
 // Register global Chart.js plugins
 Chart.register(ChartDataLabels);
 
+const bringLineToFront = {
+    id: 'bringLineToFront',
+    afterDatasetsDraw(chart) {
+    // assume your line is dataset index 1
+    const meta = chart.getDatasetMeta(1);
+    meta.controller.draw();}};
+
 window.createBarChart = function ({
     canvasId,
     labels,
@@ -165,109 +172,148 @@ window.createDonutChart = function ({
 };
 
 window.createBarLineChart = function ({
-    canvasId,
-    labels,
-    barDataset,
-    lineDataset,
-    yAxisOptions = {},
-    y1AxisOptions = {},
-    tooltipFormatter = null
+  canvasId,
+  labels,
+  barDataset,       // must include: data: [...], backgroundColor, hoverBackgroundColor, etc.
+  lineDataset,      // must include: data: [...], borderColor, tension, etc.
+  barUnit = "mn",
+  lineUnit = "%",
+  maxY = null,
+  stepY = null,
+  maxY1 = null,
+  stepY1 = null,
+  tooltipFormatter = null
 }) {
-    const canvas = document.getElementById(canvasId);
-    if (!canvas) return console.error(`❌ Canvas ${canvasId} not found`);
-    const ctx = canvas.getContext("2d");
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    return console.error(`❌ Canvas "${canvasId}" not found`);
+  }
+  const ctx = canvas.getContext("2d");
 
-    if (window[canvasId + "Instance"]) {
-        window[canvasId + "Instance"].destroy();
-    }
+  // 1. Destroy any existing Chart.js instance on this canvas
+  const existing = Chart.getChart(canvas);
+  if (existing) {
+    existing.destroy();
+  }
 
-    Chart.defaults.font.family = "Poppins";
+  Chart.defaults.font.family = "Poppins";
 
-    window[canvasId + "Instance"] = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels,
-            datasets: [
-                { ...barDataset },
-                { ...lineDataset }
-            ]
+  // 2. Compute “nice” max & step for the bar axis
+  const rawMaxBar = Math.max(...barDataset.data);
+  const niceMaxBar = maxY || Math.ceil(rawMaxBar / 50)*50;
+  const stepBar   = stepY || Math.ceil(niceMaxBar / 4);
+  const roundedMaxBar = Math.ceil(niceMaxBar / stepBar) * stepBar;
+
+  // 3. Compute “nice” max & step for the line axis
+  const rawMaxLine = Math.max(...lineDataset.data);
+  const niceMaxLine = maxY1 || Math.ceil(rawMaxLine);
+  const stepLine   = stepY1 || Math.ceil(niceMaxLine / 4);
+  const roundedMaxLine = Math.ceil(niceMaxLine / stepLine) * stepLine;
+
+  // 4. Force each dataset to have the correct controller type
+  const barDs = {
+    type: 'bar',
+    yAxisID: 'y',
+    borderRadius: 4,
+    ...barDataset
+  };
+
+  const lineDs = {
+    type: 'line',
+    yAxisID: 'y1',
+    pointRadius: 3,
+    fill: false,
+    ...lineDataset
+  };
+
+
+  // 5. Create the chart
+  new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [ barDs, lineDs ]
+    },
+    plugins: [bringLineToFront],
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: "index", intersect: false },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: roundedMaxBar,
+          ticks: {
+            stepSize: stepBar,
+            color: "#fff",
+            callback: v => `${v.toLocaleString("en-US", { maximumFractionDigits: 0 })} ${barUnit}`
+          },
+          border: {
+            display: true,
+            color: "rgba(255,255,255,0.3)",
+            width: 1
+          }
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: "index", intersect: false },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ...yAxisOptions,
-                    ticks: {
-                        color: "#fff",
-                        ...yAxisOptions?.ticks
-                    },
-                    border: {
-                        display: true,
-                        color: "rgba(255,255,255,0.3)",
-                        width: 1,
-                        ...yAxisOptions?.border
-                    }
-                },
-                y1: {
-                    beginAtZero: true,
-                    position: "right",
-                    ...y1AxisOptions,
-                    ticks: {
-                        color: "#fff",
-                        ...y1AxisOptions?.ticks
-                    },
-                    grid: { drawOnChartArea: false, drawTicks: false },
-                    border: {
-                        display: true,
-                        color: "rgba(255,255,255,0.3)",
-                        width: 1,
-                        ...y1AxisOptions?.border
-                    }
-                },
-                x: {
-                    ticks: { color: "#fff" },
-                    grid: { drawOnChartArea: false, drawTicks: false },
-                    border: {
-                        display: true,
-                        color: "rgba(255,255,255,0.3)",
-                        width: 1
-                    }
-                }
-            },
-            plugins: {
-                datalabels: { display: false },
-                legend: {
-                    display: true,
-                    position: "top",
-                    align: "center",
-                    labels: {
-                        color: "#fff",
-                        font: { size: 12, family: "Poppins" },
-                        padding: 10,
-                        boxWidth: 20
-                    }
-                },
-                tooltip: {
-                    backgroundColor: "rgba(240,240,240,0.2)",
-                    titleColor: "#fff",
-                    bodyColor: "#fff",
-                    borderWidth: 0,
-                    titleFont: { weight: "bold" },
-                    bodyFont: { weight: "bold" },
-                    callbacks: {
-                        label: tooltipFormatter || function (ctx) {
-                            const label = ctx.dataset.label || "";
-                            return `${label}: ${ctx.raw}`;
-                        }
-                    }
-                }
-            }
+        y1: {
+          beginAtZero: true,
+          position: "right",
+          max: roundedMaxLine,
+          ticks: {
+            stepSize: stepLine,
+            color: "#fff",
+            callback: v => `${v.toLocaleString("en-US", { maximumFractionDigits: 0 })} ${lineUnit}`
+          },
+          grid: { drawOnChartArea: false, drawTicks: false },
+          border: {
+            display: true,
+            color: "rgba(255,255,255,0.3)",
+            width: 1
+          }
+        },
+        x: {
+          ticks: { color: "#fff" },
+          grid: { drawOnChartArea: false, drawTicks: false },
+          border: {
+            display: true,
+            color: "rgba(255,255,255,0.3)",
+            width: 1
+          }
         }
-    });
+      },
+      plugins: {
+        datalabels: { display: false },
+        legend: {
+          display: true,
+          position: "top",
+          align: "center",
+          labels: {
+            color: "#fff",
+            font: { size: 12, family: "Poppins" },
+            padding: 10,
+            boxWidth: 20
+          }
+        },
+        tooltip: {
+          backgroundColor: "rgba(240,240,240,0.2)",
+          titleColor: "#fff",
+          bodyColor: "#fff",
+          borderWidth: 0,
+          titleFont: { weight: "bold" },
+          bodyFont: { weight: "bold" },
+          callbacks: {
+            label: tooltipFormatter || function (ctx) {
+              const label = ctx.dataset.label || "";
+              const raw   = ctx.raw;
+              const unit  = ctx.dataset.yAxisID === 'y1' ? lineUnit : barUnit;
+              return `${label}: ${raw.toLocaleString("en-US", { minimumFractionDigits: 1 })} ${unit}`;
+            }
+          }
+        },
+      }
+    }
+  });
 };
+
+
 
 window.createLineChart = function ({
     canvasId,

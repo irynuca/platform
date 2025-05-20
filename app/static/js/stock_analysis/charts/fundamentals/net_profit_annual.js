@@ -1,21 +1,21 @@
-window.renderAnnualRevenueGrowthChart = function () {
-    fetch(`/revenue_annual_and_change_data/${STOCK_TICKER}`)
+window.renderAnnualNetProfitChart = function () {
+    fetch(`/net_profit_annual_and_margin_data/${STOCK_TICKER}`)
         .then(response => {
             if (!response.ok) throw new Error("Backend returned an error");
             return response.json();
         })
         .then(data => {
-            if (!data || !data.periods?.length || !data.revenues?.length || !data.change_rate?.length) {
+            if (!data || !data.periods?.length || !data.net_profit?.length || !data.net_margin?.length) {
                 console.warn("🚫 Incomplete data received");
                 return;
             }
 
             const labels = data.periods;
-            const revenues = data.revenues.map(v => v / 1_000_000); // → mn RON
-            const growthRates = data.change_rate;      
+            const netProfit = data.net_profit.map(v => v / 1_000_000); // → mn RON
+            const netMargin = data.net_margin;      
 
-            const revMax = Math.max(...revenues);
-            const growthMax = Math.max(...growthRates);
+            const profitMax = Math.max(...netProfit);
+            const marginMax = Math.max(...netMargin);
 
             const calcScale = (rawMax, steps) => {
                 const step = steps.find(s => rawMax <= s * 5) || steps[steps.length - 1];
@@ -23,18 +23,18 @@ window.renderAnnualRevenueGrowthChart = function () {
                 return { max: max, step: Math.ceil(max / 4) };
             };
 
-            const y = calcScale(revMax, [100, 200, 500]);
-            const y1 = calcScale(growthMax, [2, 5, 10, 20]);
+            const y = calcScale(profitMax, [100, 200, 500]);
+            const y1 = calcScale(marginMax, [2, 5, 10, 20]);
 
             createBarLineChart({
-                canvasId: "revenueAnnualandChange",
+                canvasId: "NetProfitAnnualandMargin",
                 labels,
                 barDataset: {
                     type: "bar",
-                    label: "Venituri",
-                    data: revenues,
-                    backgroundColor: chartTheme.primary.base,
-                    hoverBackgroundColor: chartTheme.primary.hover,
+                    label: "Profit net atribuibil",
+                    data: netProfit,
+                    backgroundColor: chartTheme.info.base,
+                    hoverBackgroundColor: chartTheme.info.hover,
                     borderRadius: 4,
                     yAxisID: "y",
                     order: 2,
@@ -42,10 +42,10 @@ window.renderAnnualRevenueGrowthChart = function () {
                 },
                 lineDataset: {
                     type: "line",
-                    label: "Creștere venit y/y",
-                    data: growthRates,
-                    borderColor: chartTheme.orange.base,
-                    backgroundColor: chartTheme.orange.base,
+                    label: "Marja neta",
+                    data: netMargin,
+                    borderColor: chartTheme.secondary.base,
+                    backgroundColor: chartTheme.secondary.base,
                     fill: false,
                     tension: 0.3,
                     pointRadius: 4,
@@ -71,6 +71,6 @@ window.renderAnnualRevenueGrowthChart = function () {
             });
         })
         .catch(err => {
-            console.error("❌ Eroare la încărcarea graficului de venituri:", err);
+            console.error("❌ Eroare la încărcarea graficului de profit operational:", err);
         });
 };
